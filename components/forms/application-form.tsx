@@ -27,7 +27,7 @@ type TextAreaProps = {
 };
 
 function getValue(state: ApplicationFormState, name: string) {
-  const value = state.values[name];
+  const value = state.values?.[name];
   return typeof value === "string" ? value : "";
 }
 
@@ -38,7 +38,7 @@ function FieldError({
   state: ApplicationFormState;
   name: string;
 }) {
-  const errors = state.fieldErrors[name as FieldName];
+  const errors = state.fieldErrors?.[name as FieldName];
 
   if (!errors?.length) {
     return null;
@@ -105,7 +105,7 @@ function CheckboxField({
       <input
         name={name}
         type="checkbox"
-        defaultChecked={state.values[name] === true}
+        defaultChecked={state.values?.[name] === true}
         className="mt-1 size-4 rounded border-forest-900/30 text-forest-700"
       />
       <span>
@@ -137,8 +137,14 @@ export function ApplicationForm() {
     submitApplication,
     initialApplicationFormState,
   );
+  const currentState: ApplicationFormState = {
+    ...initialApplicationFormState,
+    ...state,
+    fieldErrors: state.fieldErrors ?? {},
+    values: state.values ?? {},
+  };
 
-  if (state.status === "success") {
+  if (currentState.status === "success") {
     return (
       <div className="rounded-md border border-forest-700/20 bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold uppercase text-clay">
@@ -148,7 +154,7 @@ export function ApplicationForm() {
           Thank you for applying.
         </h1>
         <p className="mt-4 text-base leading-7 text-forest-900/72">
-          {state.message}
+          {currentState.message}
         </p>
       </div>
     );
@@ -169,42 +175,47 @@ export function ApplicationForm() {
         </p>
       </div>
 
-      {state.status === "error" ? (
+      {currentState.status === "error" ? (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
-          {state.message}
+          {currentState.message}
         </div>
       ) : null}
 
       <div className="mt-8 grid gap-6 md:grid-cols-2">
-        <TextField label="Full name" name="fullName" state={state} />
-        <TextField label="Email" name="email" type="email" state={state} />
-        <TextField label="Phone" name="phone" type="tel" state={state} />
+        <TextField label="Full name" name="fullName" state={currentState} />
+        <TextField label="Email" name="email" type="email" state={currentState} />
+        <TextField label="Phone" name="phone" type="tel" state={currentState} />
         <TextField
           label="Date of birth"
           name="dateOfBirth"
           type="date"
-          state={state}
+          state={currentState}
         />
         <div className="md:col-span-2">
-          <TextArea label="Address" name="address" rows={3} state={state} />
+          <TextArea
+            label="Address"
+            name="address"
+            rows={3}
+            state={currentState}
+          />
         </div>
         <TextField
           label="Emergency contact name"
           name="emergencyContactName"
-          state={state}
+          state={currentState}
         />
         <TextField
           label="Emergency contact phone"
           name="emergencyContactPhone"
           type="tel"
-          state={state}
+          state={currentState}
         />
         <div className="md:col-span-2">
           <TextArea
             label="Outdoor interests"
             name="outdoorInterests"
             rows={4}
-            state={state}
+            state={currentState}
           />
         </div>
         <div className="md:col-span-2">
@@ -213,7 +224,7 @@ export function ApplicationForm() {
             name="firearmsLicenceInfo"
             required={false}
             rows={3}
-            state={state}
+            state={currentState}
           />
         </div>
         <div className="md:col-span-2">
@@ -221,7 +232,7 @@ export function ApplicationForm() {
             label="Referral or how you heard about PROS"
             name="referral"
             rows={3}
-            state={state}
+            state={currentState}
           />
         </div>
         <div className="md:col-span-2">
@@ -229,13 +240,13 @@ export function ApplicationForm() {
             label="Reason for joining"
             name="reasonForJoining"
             rows={5}
-            state={state}
+            state={currentState}
           />
         </div>
         <TextField
           label="Typed signature"
           name="typedSignature"
-          state={state}
+          state={currentState}
         />
       </div>
 
@@ -243,17 +254,17 @@ export function ApplicationForm() {
         <CheckboxField
           label="I agree to follow club rules and committee requirements."
           name="agreementAccepted"
-          state={state}
+          state={currentState}
         />
         <CheckboxField
           label="I consent to PROS storing and using my information for membership administration."
           name="privacyAccepted"
-          state={state}
+          state={currentState}
         />
         <CheckboxField
           label="I acknowledge the club waiver and outdoor activity risks."
           name="waiverAccepted"
-          state={state}
+          state={currentState}
         />
       </div>
 
