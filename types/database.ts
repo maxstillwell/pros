@@ -17,6 +17,12 @@ export type ApplicationStatus =
 export type ProfileRole = "admin" | "member";
 export type PostVisibility = "public" | "members_only";
 export type PostStatus = "draft" | "published";
+export type EmailType =
+  | "application_received"
+  | "admin_new_application"
+  | "application_approved"
+  | "application_rejected"
+  | "member_update";
 
 export type Database = {
   public: {
@@ -62,6 +68,7 @@ export type Database = {
           status: ApplicationStatus;
           admin_notes: string | null;
           reviewed_at: string | null;
+          reviewed_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -105,6 +112,7 @@ export type Database = {
           status?: ApplicationStatus;
           admin_notes?: string | null;
           reviewed_at?: string | null;
+          reviewed_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -117,22 +125,32 @@ export type Database = {
           subject: string | null;
           audience: string | null;
           post_id: string | null;
+          recipient_email: string | null;
+          email_type: EmailType | null;
+          related_application_id: string | null;
+          related_profile_id: string | null;
           recipient_count: number | null;
           status: string | null;
           provider_message_id: string | null;
           error_message: string | null;
           sent_at: string;
+          created_at: string;
         };
         Insert: {
           id?: string;
           subject?: string | null;
           audience?: string | null;
           post_id?: string | null;
+          recipient_email?: string | null;
+          email_type?: EmailType | null;
+          related_application_id?: string | null;
+          related_profile_id?: string | null;
           recipient_count?: number | null;
           status?: string | null;
           provider_message_id?: string | null;
           error_message?: string | null;
           sent_at?: string;
+          created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["email_logs"]["Insert"]>;
         Relationships: [];
@@ -237,6 +255,7 @@ export type Database = {
           stripe_customer_id: string | null;
           membership_started_at: string | null;
           membership_expires_at: string | null;
+          linked_application_id: string | null;
           notes: string | null;
           created_at: string;
           updated_at: string;
@@ -252,6 +271,7 @@ export type Database = {
           stripe_customer_id?: string | null;
           membership_started_at?: string | null;
           membership_expires_at?: string | null;
+          linked_application_id?: string | null;
           notes?: string | null;
           created_at?: string;
           updated_at?: string;

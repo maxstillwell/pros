@@ -4,10 +4,12 @@ const adminNav = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/applications", label: "Applications" },
   { href: "/admin/members", label: "Members" },
+  { href: "/admin/payments", label: "Payments" },
   { href: "/admin/posts", label: "Posts" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/emails", label: "Emails" },
   { href: "/admin/settings", label: "Settings" },
+  { href: "/logout", label: "Logout" },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -32,9 +34,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <div className="mt-8 flex flex-wrap gap-3 text-sm text-stone/70">
             <Link href="/" className="hover:text-white">
               Public site
-            </Link>
-            <Link href="/logout" className="hover:text-white">
-              Logout
             </Link>
           </div>
         </aside>

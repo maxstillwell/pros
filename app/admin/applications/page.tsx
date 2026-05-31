@@ -4,19 +4,70 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { getAdminAccess } from "@/lib/auth/profile";
 import { formatDateTime } from "@/lib/format";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import type { ApplicationStatus } from "@/types/database";
 
-export default async function AdminApplicationsPage() {
+type AdminApplicationsPageProps = {
+  searchParams: Promise<{
+    status?: string;
+    q?: string;
+  }>;
+};
+
+const statusFilters = ["all", "pending", "approved", "rejected"] as const;
+
+function getSafeStatus(value: string | undefined) {
+  return statusFilters.includes(value as (typeof statusFilters)[number])
+    ? value
+    : "all";
+}
+
+function cleanSearch(value: string | undefined) {
+  return value?.trim().replaceAll(",", " ") ?? "";
+}
+
+function filterHref(status: string, q: string) {
+  const params = new URLSearchParams();
+
+  if (status !== "all") {
+    params.set("status", status);
+  }
+
+  if (q) {
+    params.set("q", q);
+  }
+
+  return `/admin/applications${params.size ? `?${params}` : ""}`;
+}
+
+export default async function AdminApplicationsPage({
+  searchParams,
+}: AdminApplicationsPageProps) {
   const access = await getAdminAccess();
 
   if (access.status !== "ok") {
     return <AdminAccessNotice access={access} />;
   }
 
+  const params = await searchParams;
+  const activeStatus = getSafeStatus(params.status);
+  const search = cleanSearch(params.q);
   const supabase = createSupabaseServiceClient();
-  const { data: applications, error } = await supabase
+  let query = supabase
     .from("applications")
     .select("*")
     .order("created_at", { ascending: false });
+
+  if (activeStatus !== "all") {
+    query = query.eq("status", activeStatus as ApplicationStatus);
+  }
+
+  if (search) {
+    query = query.or(
+      `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,phone_number.ilike.%${search}%`,
+    );
+  }
+
+  const { data: applications, error } = await query;
 
   return (
     <div>
@@ -27,6 +78,39 @@ export default async function AdminApplicationsPage() {
         <h1 className="mt-2 text-3xl font-semibold text-forest-900">
           Membership applications
         </h1>
+      </div>
+
+      <div className="mt-6 rounded-md border border-forest-900/10 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap gap-2">
+          {statusFilters.map((status) => (
+            <Link
+              key={status}
+              href={filterHref(status, search)}
+              className={`rounded-md border px-3 py-2 text-sm font-semibold ${
+                activeStatus === status
+                  ? "border-forest-700 bg-forest-700 text-white"
+                  : "border-forest-900/15 text-forest-900 hover:bg-forest-50"
+              }`}
+            >
+              {status === "all" ? "All" : status}
+            </Link>
+          ))}
+        </div>
+        <form className="mt-4 flex flex-col gap-3 sm:flex-row">
+          {activeStatus !== "all" ? (
+            <input type="hidden" name="status" value={activeStatus} />
+          ) : null}
+          <input
+            name="q"
+            type="search"
+            defaultValue={search}
+            placeholder="Search by name, email, or phone"
+            className="min-h-11 flex-1 rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+          />
+          <button className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white hover:bg-forest-900">
+            Search
+          </button>
+        </form>
       </div>
 
       <div className="mt-8 rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
@@ -44,6 +128,7 @@ export default async function AdminApplicationsPage() {
                   <th className="py-3 pr-4 font-semibold">Phone</th>
                   <th className="py-3 pr-4 font-semibold">Status</th>
                   <th className="py-3 pr-4 font-semibold">Submitted</th>
+                  <th className="py-3 pr-4 font-semibold">Reviewed</th>
                   <th className="py-3 pr-4 font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -69,6 +154,9 @@ export default async function AdminApplicationsPage() {
                     </td>
                     <td className="py-3 pr-4 text-forest-900/72">
                       {formatDateTime(application.created_at)}
+                    </td>
+                    <td className="py-3 pr-4 text-forest-900/72">
+                      {formatDateTime(application.reviewed_at)}
                     </td>
                     <td className="py-3 pr-4">
                       <Link

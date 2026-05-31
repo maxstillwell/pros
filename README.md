@@ -11,7 +11,7 @@ and Supabase-backed club records.
 - Tailwind CSS
 - Supabase Auth and Postgres
 - Stripe Checkout placeholders
-- Resend email placeholders
+- Resend application emails
 - Vercel deployment target
 
 ## Local setup
@@ -53,7 +53,7 @@ components.
 1. Create a Supabase project.
 2. Copy the project URL and anon key into `.env.local`.
 3. Copy the service role key into `.env.local`.
-4. Run the SQL migration in `supabase/migrations/20260531000000_initial_schema.sql`.
+4. Run the SQL migrations in `supabase/migrations/`.
 
 With the Supabase CLI, the migration path is:
 
@@ -64,11 +64,22 @@ supabase db push
 Without the CLI, paste the migration SQL into the Supabase SQL editor and run
 it once.
 
-## First admin user
+## Creating the First Admin User
 
-1. Sign in at `/login` with the email address that should become admin.
-2. In Supabase, open Auth and copy that user's ID.
-3. Insert or update a row in `profiles`:
+1. Create a user in Supabase Auth with the email address that should become admin.
+2. Add or update the matching row in `profiles`.
+3. Set `role = 'admin'` and `membership_status = 'active'`.
+
+If the profile row already exists:
+
+```sql
+update public.profiles
+set role = 'admin',
+    membership_status = 'active'
+where email = 'YOUR_ADMIN_EMAIL@example.com';
+```
+
+If the profile row may not exist yet, use an upsert:
 
 ```sql
 insert into public.profiles (auth_user_id, email, full_name, role, membership_status)
@@ -88,6 +99,69 @@ set auth_user_id = excluded.auth_user_id,
 
 After that, `/admin` will show the admin dashboard.
 
+## Membership Admin Workflow
+
+### Local URLs
+
+```txt
+Public site:
+http://localhost:3000
+
+Login:
+http://localhost:3000/login
+
+Admin dashboard:
+http://localhost:3000/admin
+
+Applications:
+http://localhost:3000/admin/applications
+
+Members:
+http://localhost:3000/admin/members
+```
+
+### How to review applications
+
+1. Log in as admin.
+2. Open `/admin/applications`.
+3. Search or filter applications by status.
+4. Click an application.
+5. Review applicant details, emergency contact, interests, acknowledgements, waiver, consent, and signature.
+6. Approve or reject the application.
+7. Approved applications create or update a member profile with status `approved`.
+
+### How to manage members
+
+1. Open `/admin/members`.
+2. Search or filter by membership status.
+3. Open the member profile.
+4. Update contact details, notes, status, membership dates, or Stripe customer ID.
+5. Use Mark Active, Mark Expired, or Mark Cancelled for common status changes.
+6. Save changes.
+
+### Email setup
+
+Application emails use Resend when these variables are configured:
+
+```env
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=
+ADMIN_EMAIL=
+NEXT_PUBLIC_SITE_URL=
+```
+
+Email attempts are logged in `email_logs`. If Resend is not configured or email
+sending fails, the application or review action still completes and the email
+log records `skipped` or `failed`.
+
+### Current limitations
+
+- Stripe payment link automation is not implemented yet.
+- Full renewal reminders are not implemented yet.
+- Advanced member roles are not implemented yet.
+- Shop checkout remains a later phase.
+- Advanced news/member-only publishing remains a later phase.
+
 ## Current scope
 
 Implemented in this first framework:
@@ -98,8 +172,8 @@ Implemented in this first framework:
 - Supabase browser/server/service helpers
 - Zod-validated membership application form
 - Admin dashboard shell
-- Applications list, detail view, notes, approve, and reject actions
-- Placeholder members page
+- Applications list, filters, search, detail view, notes, approve, and reject actions
+- Member list, filters, search, detail view, status updates, notes, and linked application view
 - Placeholder posts, products, emails, settings admin pages
 - Placeholder API routes for Stripe and Resend
 
@@ -118,13 +192,18 @@ after confirmed membership payment.
 
 ## Resend notes
 
-Resend is intentionally not implemented in this first build. The placeholder
-route is:
+Resend is implemented for membership application workflow emails:
+
+- Applicant confirmation email after application submission
+- Admin notification email after application submission
+- Applicant approval email
+- Applicant rejection email
+
+The news-update email route remains a placeholder:
 
 - `POST /api/email/send-post-update`
 
-Next phase work should send only explicit admin-triggered updates and write to
-`email_logs`.
+Next phase work should add explicit admin-triggered post/member update emails.
 
 ## Vercel deployment
 
@@ -143,12 +222,21 @@ npm run lint
 npm run typecheck
 ```
 
+On Windows PowerShell in this workspace:
+
+```powershell
+npm.cmd run dev
+npm.cmd run build
+npm.cmd run lint
+npm.cmd run typecheck
+```
+
 ## Known TODOs
 
 - Replace placeholder news content with Supabase post queries and editing.
 - Build the full admin post editor.
 - Add Stripe membership checkout and webhook handling.
-- Add Resend email sending and email log updates.
+- Add post and custom member update email sending.
 - Add member-only post access in the public news detail page.
 - Add product management and shop checkout in a later phase.
 - Replace placeholder privacy, terms, waiver, and disclaimer copy before launch.

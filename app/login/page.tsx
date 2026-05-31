@@ -10,13 +10,27 @@ type LoginPageProps = {
   searchParams: Promise<{
     sent?: string;
     error?: string;
+    redirectTo?: string;
   }>;
 };
+
+function getSafeRedirect(value: FormDataEntryValue | string | undefined) {
+  if (typeof value !== "string" || !value.startsWith("/")) {
+    return "/admin";
+  }
+
+  if (value.startsWith("//")) {
+    return "/admin";
+  }
+
+  return value;
+}
 
 async function sendMagicLink(formData: FormData) {
   "use server";
 
   const email = formData.get("email");
+  const redirectTo = getSafeRedirect(formData.get("redirectTo") ?? "/admin");
 
   if (typeof email !== "string" || !email.trim()) {
     redirect("/login?error=missing-email");
@@ -30,7 +44,9 @@ async function sendMagicLink(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email: email.trim(),
     options: {
-      emailRedirectTo: `${getSiteUrl()}/members`,
+      emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(
+        redirectTo,
+      )}`,
     },
   });
 
@@ -38,11 +54,12 @@ async function sendMagicLink(formData: FormData) {
     redirect("/login?error=send-failed");
   }
 
-  redirect("/login?sent=1");
+  redirect(`/login?sent=1&redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
+  const redirectTo = getSafeRedirect(params.redirectTo);
   const errorMessages: Record<string, string> = {
     "missing-email": "Enter an email address to receive a sign-in link.",
     "missing-config": "Supabase is not configured yet.",
@@ -54,13 +71,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <main className="px-5 py-16">
         <div className="mx-auto max-w-md rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
           <p className="text-sm font-semibold uppercase text-clay">
-            Member login
+            Admin login
           </p>
           <h1 className="mt-3 text-3xl font-semibold text-forest-900">
             Sign in with email.
           </h1>
           <p className="mt-3 text-sm leading-6 text-forest-900/70">
-            PROS uses Supabase magic links for the first framework.
+            PROS uses Supabase magic links. Admin access is controlled by the
+            matching profile row having role set to admin.
           </p>
 
           {params.sent ? (
@@ -76,6 +94,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           ) : null}
 
           <form action={sendMagicLink} className="mt-6">
+            <input type="hidden" name="redirectTo" value={redirectTo} />
             <label className="block">
               <span className="text-sm font-semibold text-forest-900">
                 Email address

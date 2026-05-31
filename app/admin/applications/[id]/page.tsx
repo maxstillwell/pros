@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminAccessNotice } from "@/components/admin/admin-access-notice";
+import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
   approveApplication,
@@ -103,6 +105,15 @@ export default async function AdminApplicationDetailPage({
       ],
     },
     {
+      title: "Membership Acknowledgement",
+      rows: [
+        [
+          "Acknowledgement",
+          "Applicant acknowledged the Society expectations, activity risks, and agreement to conduct requirements shown on the application form.",
+        ],
+      ],
+    },
+    {
       title: "Membership Acknowledgement Agreements",
       rows: [
         ["Safe conduct", application.agree_safe_conduct],
@@ -138,6 +149,18 @@ export default async function AdminApplicationDetailPage({
         ["Reviewed", formatDateTime(application.reviewed_at)],
       ],
     },
+    {
+      title: "Admin Notes",
+      rows: [["Internal notes", application.admin_notes]],
+    },
+    {
+      title: "Review History",
+      rows: [
+        ["Status", application.status],
+        ["Reviewed", formatDateTime(application.reviewed_at)],
+        ["Reviewed by profile ID", application.reviewed_by],
+      ],
+    },
   ];
 
   return (
@@ -153,6 +176,12 @@ export default async function AdminApplicationDetailPage({
           <div className="mt-3">
             <StatusBadge status={application.status} />
           </div>
+          <Link
+            href="/admin/applications"
+            className="mt-4 inline-flex text-sm font-semibold text-clay hover:text-forest-900"
+          >
+            Back to Applications
+          </Link>
         </div>
       </div>
 
@@ -224,20 +253,21 @@ export default async function AdminApplicationDetailPage({
                 formAction={saveApplicationNotes}
                 className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
               >
-                Save notes
+                Save Notes
               </button>
               <button
                 formAction={approveApplication}
                 className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
               >
-                Approve application
+                Approve Application
               </button>
-              <button
+              <ConfirmSubmitButton
                 formAction={rejectApplication}
+                message="Reject this application?"
                 className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800 transition hover:bg-red-100"
               >
-                Reject application
-              </button>
+                Reject Application
+              </ConfirmSubmitButton>
             </div>
           </form>
         </section>

@@ -10,13 +10,17 @@ const statusClassName: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
+  const label = status
+    .replaceAll("_", " ")
+    .replace(/^\w/, (letter) => letter.toUpperCase());
+
   return (
     <span
       className={`inline-flex rounded-md border px-2 py-1 text-xs font-semibold ${
         statusClassName[status] ?? "border-forest-900/20 bg-white text-forest-900"
       }`}
     >
-      {status.replace("_", " ")}
+      {label}
     </span>
   );
 }

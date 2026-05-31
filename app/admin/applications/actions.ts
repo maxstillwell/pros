@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminAccess } from "@/lib/auth/profile";
+import {
+  sendApplicationApprovedEmail,
+  sendApplicationRejectedEmail,
+} from "@/lib/email/application-emails";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import type { ApplicationStatus } from "@/types/database";
 
 function readId(formData: FormData) {
   const id = formData.get("id");
@@ -31,6 +36,7 @@ async function getApplicationActionContext(formData: FormData) {
   return {
     id,
     notes: readNotes(formData),
+    adminProfile: access.profile,
     supabase: createSupabaseServiceClient(),
   };
 }
@@ -54,7 +60,8 @@ export async function saveApplicationNotes(formData: FormData) {
 }
 
 export async function approveApplication(formData: FormData) {
-  const { id, notes, supabase } = await getApplicationActionContext(formData);
+  const { id, notes, adminProfile, supabase } =
+    await getApplicationActionContext(formData);
 
   const { data: application, error: readError } = await supabase
     .from("applications")
@@ -75,15 +82,20 @@ export async function approveApplication(formData: FormData) {
   const membershipStatus =
     existingProfile?.membership_status === "active" ? "active" : "approved";
 
-  const { error: profileError } = await supabase.from("profiles").upsert(
-    {
-      email: application.email,
-      full_name: application.full_name,
-      phone: application.phone_number ?? application.phone,
-      membership_status: membershipStatus,
-    },
-    { onConflict: "email" },
-  );
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .upsert(
+      {
+        email: application.email,
+        full_name: application.full_name,
+        phone: application.phone_number ?? application.phone,
+        membership_status: membershipStatus,
+        linked_application_id: application.id,
+      },
+      { onConflict: "email" },
+    )
+    .select("id")
+    .single();
 
   if (profileError) {
     redirect(`/admin/applications/${id}?error=profile`);
@@ -95,6 +107,7 @@ export async function approveApplication(formData: FormData) {
       status: "approved",
       admin_notes: notes,
       reviewed_at: new Date().toISOString(),
+      reviewed_by: adminProfile.id,
     })
     .eq("id", id);
 
@@ -106,11 +119,35 @@ export async function approveApplication(formData: FormData) {
     redirect(`/admin/applications/${id}?error=approve`);
   }
 
+  await sendApplicationApprovedEmail({
+    applicationId: application.id,
+    fullName: application.full_name,
+    email: application.email,
+    profileId: profile.id,
+  });
+
   redirect(`/admin/applications/${id}?saved=approved`);
 }
 
 export async function rejectApplication(formData: FormData) {
-  const { id, notes, supabase } = await getApplicationActionContext(formData);
+  const { id, notes, adminProfile, supabase } =
+    await getApplicationActionContext(formData);
+
+  const { data: application, error: readError } = await supabase
+    .from("applications")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (readError || !application) {
+    redirect(`/admin/applications/${id}?error=not-found`);
+  }
+
+  const { data: matchingProfile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", application.email)
+    .maybeSingle();
 
   const { error } = await supabase
     .from("applications")
@@ -118,6 +155,7 @@ export async function rejectApplication(formData: FormData) {
       status: "rejected",
       admin_notes: notes,
       reviewed_at: new Date().toISOString(),
+      reviewed_by: adminProfile.id,
     })
     .eq("id", id);
 
@@ -129,5 +167,30 @@ export async function rejectApplication(formData: FormData) {
     redirect(`/admin/applications/${id}?error=reject`);
   }
 
+  if (matchingProfile?.id) {
+    await supabase
+      .from("profiles")
+      .update({ membership_status: "rejected" })
+      .eq("id", matchingProfile.id);
+  }
+
+  await sendApplicationRejectedEmail({
+    applicationId: application.id,
+    fullName: application.full_name,
+    email: application.email,
+    profileId: matchingProfile?.id ?? null,
+  });
+
   redirect(`/admin/applications/${id}?saved=rejected`);
+}
+
+export async function setApplicationStatus(
+  formData: FormData,
+  status: Extract<ApplicationStatus, "approved" | "rejected">,
+) {
+  if (status === "approved") {
+    return approveApplication(formData);
+  }
+
+  return rejectApplication(formData);
 }
