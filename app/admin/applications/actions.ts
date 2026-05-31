@@ -79,7 +79,7 @@ export async function approveApplication(formData: FormData) {
     {
       email: application.email,
       full_name: application.full_name,
-      phone: application.phone,
+      phone: application.phone_number ?? application.phone,
       membership_status: membershipStatus,
     },
     { onConflict: "email" },

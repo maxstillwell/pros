@@ -20,6 +20,11 @@ type AdminApplicationDetailPageProps = {
   }>;
 };
 
+type DetailSection = {
+  title: string;
+  rows: Array<[string, string | boolean | null]>;
+};
+
 const errorCopy: Record<string, string> = {
   notes: "Notes could not be saved.",
   approve: "The application could not be approved.",
@@ -28,6 +33,18 @@ const errorCopy: Record<string, string> = {
   "not-authorized": "You are not authorised to update this application.",
   "not-found": "The application could not be found.",
 };
+
+function yesNo(value: boolean) {
+  return value ? "Yes" : "No";
+}
+
+function renderValue(value: string | boolean | null) {
+  if (typeof value === "boolean") {
+    return yesNo(value);
+  }
+
+  return value || "Not set";
+}
 
 export default async function AdminApplicationDetailPage({
   params,
@@ -52,21 +69,75 @@ export default async function AdminApplicationDetailPage({
     notFound();
   }
 
-  const detailRows = [
-    ["Full name", application.full_name],
-    ["Email", application.email],
-    ["Phone", application.phone],
-    ["Date of birth", formatDate(application.date_of_birth)],
-    ["Address", application.address],
-    ["Emergency contact name", application.emergency_contact_name],
-    ["Emergency contact phone", application.emergency_contact_phone],
-    ["Outdoor interests", application.outdoor_interests],
-    ["Firearms licence information", application.firearms_licence_info],
-    ["Referral", application.referral],
-    ["Reason for joining", application.reason_for_joining],
-    ["Typed signature", application.typed_signature],
-    ["Submitted", formatDateTime(application.created_at)],
-    ["Reviewed", formatDateTime(application.reviewed_at)],
+  const detailSections: DetailSection[] = [
+    {
+      title: "Applicant Details",
+      rows: [
+        ["Full Name", application.full_name],
+        ["Date of Birth", formatDate(application.date_of_birth)],
+        [
+          "Residential Address",
+          application.residential_address ?? application.address,
+        ],
+        ["Phone Number", application.phone_number ?? application.phone],
+        ["Email Address", application.email],
+        ["Occupation", application.occupation],
+        ["Firearms Licence Number", application.firearms_licence_number],
+        ["Licence Category", application.licence_category],
+        ["Expiry Date", formatDate(application.licence_expiry_date)],
+      ],
+    },
+    {
+      title: "Emergency Contact",
+      rows: [
+        ["Name", application.emergency_contact_name],
+        ["Relationship", application.emergency_contact_relationship],
+        ["Phone Number", application.emergency_contact_phone],
+      ],
+    },
+    {
+      title: "Outdoor Interests",
+      rows: [
+        ["Selected interests", application.outdoor_interests],
+        ["Other details", application.outdoor_interests_other],
+      ],
+    },
+    {
+      title: "Membership Acknowledgement Agreements",
+      rows: [
+        ["Safe conduct", application.agree_safe_conduct],
+        ["Lawful directions", application.agree_lawful_directions],
+        ["Victorian regulations", application.agree_regulations],
+        ["Respect environment", application.agree_respect_environment],
+        ["No reckless behaviour", application.agree_no_reckless_behaviour],
+        ["No intoxication", application.agree_no_intoxication],
+        [
+          "Personal responsibility",
+          application.agree_personal_responsibility,
+        ],
+        ["Rules consequence", application.agree_rules_consequence],
+      ],
+    },
+    {
+      title: "Liability Waiver",
+      rows: [["Accepted", application.accept_liability_waiver]],
+    },
+    {
+      title: "Privacy Consent",
+      rows: [["Accepted", application.accept_privacy_consent]],
+    },
+    {
+      title: "Signature",
+      rows: [
+        [
+          "Applicant Signature / Typed Full Name",
+          application.applicant_signature ?? application.typed_signature,
+        ],
+        ["Date", formatDate(application.application_date)],
+        ["Submitted", formatDateTime(application.created_at)],
+        ["Reviewed", formatDateTime(application.reviewed_at)],
+      ],
+    },
   ];
 
   return (
@@ -98,26 +169,33 @@ export default async function AdminApplicationDetailPage({
       ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.35fr_0.85fr]">
-        <section className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-forest-900">
-            Application details
-          </h2>
-          <dl className="mt-5 grid gap-4">
-            {detailRows.map(([label, value]) => (
-              <div
-                key={label}
-                className="grid gap-1 border-b border-forest-900/10 pb-4 last:border-b-0 last:pb-0 md:grid-cols-[14rem_1fr]"
-              >
-                <dt className="text-sm font-semibold text-forest-900">
-                  {label}
-                </dt>
-                <dd className="whitespace-pre-wrap text-sm leading-6 text-forest-900/72">
-                  {value || "Not set"}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
+        <div className="grid gap-6">
+          {detailSections.map((section) => (
+            <section
+              key={section.title}
+              className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm"
+            >
+              <h2 className="text-xl font-semibold text-forest-900">
+                {section.title}
+              </h2>
+              <dl className="mt-5 grid gap-4">
+                {section.rows.map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="grid gap-1 border-b border-forest-900/10 pb-4 last:border-b-0 last:pb-0 md:grid-cols-[14rem_1fr]"
+                  >
+                    <dt className="text-sm font-semibold text-forest-900">
+                      {label}
+                    </dt>
+                    <dd className="whitespace-pre-wrap text-sm leading-6 text-forest-900/72">
+                      {renderValue(value)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ))}
+        </div>
 
         <section className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-forest-900">

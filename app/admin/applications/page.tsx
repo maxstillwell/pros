@@ -60,7 +60,9 @@ export default async function AdminApplicationsPage() {
                       {application.email}
                     </td>
                     <td className="py-3 pr-4 text-forest-900/72">
-                      {application.phone ?? "Not set"}
+                      {application.phone_number ??
+                        application.phone ??
+                        "Not set"}
                     </td>
                     <td className="py-3 pr-4">
                       <StatusBadge status={application.status} />

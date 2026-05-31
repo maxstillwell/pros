@@ -6,11 +6,13 @@ import {
   hasSupabaseServiceConfig,
 } from "@/lib/supabase/server";
 
+export type ApplicationFormValue = string | boolean | string[];
+
 export type ApplicationFormState = {
   status: "idle" | "success" | "error";
   message: string;
   fieldErrors: Record<string, string[] | undefined>;
-  values: Record<string, string | boolean>;
+  values: Record<string, ApplicationFormValue>;
 };
 
 export const initialApplicationFormState: ApplicationFormState = {
@@ -25,23 +27,52 @@ function readValue(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
+function readCheckbox(formData: FormData, key: string) {
+  return formData.get(key) === "on";
+}
+
 function readApplicationForm(formData: FormData) {
   return {
-    fullName: readValue(formData, "fullName"),
+    full_name: readValue(formData, "full_name"),
+    date_of_birth: readValue(formData, "date_of_birth"),
+    residential_address: readValue(formData, "residential_address"),
+    phone_number: readValue(formData, "phone_number"),
     email: readValue(formData, "email"),
-    phone: readValue(formData, "phone"),
-    dateOfBirth: readValue(formData, "dateOfBirth"),
-    address: readValue(formData, "address"),
-    emergencyContactName: readValue(formData, "emergencyContactName"),
-    emergencyContactPhone: readValue(formData, "emergencyContactPhone"),
-    outdoorInterests: readValue(formData, "outdoorInterests"),
-    firearmsLicenceInfo: readValue(formData, "firearmsLicenceInfo"),
-    referral: readValue(formData, "referral"),
-    reasonForJoining: readValue(formData, "reasonForJoining"),
-    agreementAccepted: formData.get("agreementAccepted") === "on",
-    privacyAccepted: formData.get("privacyAccepted") === "on",
-    waiverAccepted: formData.get("waiverAccepted") === "on",
-    typedSignature: readValue(formData, "typedSignature"),
+    occupation: readValue(formData, "occupation"),
+    firearms_licence_number: readValue(formData, "firearms_licence_number"),
+    licence_category: readValue(formData, "licence_category"),
+    licence_expiry_date: readValue(formData, "licence_expiry_date"),
+    emergency_contact_name: readValue(formData, "emergency_contact_name"),
+    emergency_contact_relationship: readValue(
+      formData,
+      "emergency_contact_relationship",
+    ),
+    emergency_contact_phone: readValue(formData, "emergency_contact_phone"),
+    outdoor_interests: formData
+      .getAll("outdoor_interests")
+      .filter((value): value is string => typeof value === "string"),
+    outdoor_interests_other: readValue(formData, "outdoor_interests_other"),
+    agree_safe_conduct: readCheckbox(formData, "agree_safe_conduct"),
+    agree_lawful_directions: readCheckbox(formData, "agree_lawful_directions"),
+    agree_regulations: readCheckbox(formData, "agree_regulations"),
+    agree_respect_environment: readCheckbox(
+      formData,
+      "agree_respect_environment",
+    ),
+    agree_no_reckless_behaviour: readCheckbox(
+      formData,
+      "agree_no_reckless_behaviour",
+    ),
+    agree_no_intoxication: readCheckbox(formData, "agree_no_intoxication"),
+    agree_personal_responsibility: readCheckbox(
+      formData,
+      "agree_personal_responsibility",
+    ),
+    agree_rules_consequence: readCheckbox(formData, "agree_rules_consequence"),
+    accept_liability_waiver: readCheckbox(formData, "accept_liability_waiver"),
+    accept_privacy_consent: readCheckbox(formData, "accept_privacy_consent"),
+    applicant_signature: readValue(formData, "applicant_signature"),
+    application_date: readValue(formData, "application_date"),
   };
 }
 
@@ -73,23 +104,42 @@ export async function submitApplication(
 
   const supabase = createSupabaseServiceClient();
   const application = parsed.data;
+  const outdoorInterests = application.outdoor_interests.join(", ");
 
   const { error } = await supabase.from("applications").insert({
-    full_name: application.fullName,
+    full_name: application.full_name,
     email: application.email,
-    phone: application.phone,
-    date_of_birth: application.dateOfBirth,
-    address: application.address,
-    emergency_contact_name: application.emergencyContactName,
-    emergency_contact_phone: application.emergencyContactPhone,
-    outdoor_interests: application.outdoorInterests,
-    firearms_licence_info: application.firearmsLicenceInfo,
-    referral: application.referral,
-    reason_for_joining: application.reasonForJoining,
-    agreement_accepted: application.agreementAccepted,
-    privacy_accepted: application.privacyAccepted,
-    waiver_accepted: application.waiverAccepted,
-    typed_signature: application.typedSignature,
+    phone: application.phone_number,
+    phone_number: application.phone_number,
+    date_of_birth: application.date_of_birth,
+    address: application.residential_address,
+    residential_address: application.residential_address,
+    occupation: application.occupation,
+    firearms_licence_number: application.firearms_licence_number,
+    licence_category: application.licence_category,
+    licence_expiry_date: application.licence_expiry_date,
+    emergency_contact_name: application.emergency_contact_name,
+    emergency_contact_relationship: application.emergency_contact_relationship,
+    emergency_contact_phone: application.emergency_contact_phone,
+    outdoor_interests: outdoorInterests,
+    outdoor_interests_other: application.outdoor_interests_other,
+    firearms_licence_info: application.firearms_licence_number,
+    agreement_accepted: true,
+    agree_safe_conduct: application.agree_safe_conduct,
+    agree_lawful_directions: application.agree_lawful_directions,
+    agree_regulations: application.agree_regulations,
+    agree_respect_environment: application.agree_respect_environment,
+    agree_no_reckless_behaviour: application.agree_no_reckless_behaviour,
+    agree_no_intoxication: application.agree_no_intoxication,
+    agree_personal_responsibility: application.agree_personal_responsibility,
+    agree_rules_consequence: application.agree_rules_consequence,
+    waiver_accepted: application.accept_liability_waiver,
+    accept_liability_waiver: application.accept_liability_waiver,
+    privacy_accepted: application.accept_privacy_consent,
+    accept_privacy_consent: application.accept_privacy_consent,
+    typed_signature: application.applicant_signature,
+    applicant_signature: application.applicant_signature,
+    application_date: application.application_date,
     status: "pending",
   });
 
@@ -106,7 +156,7 @@ export async function submitApplication(
   return {
     status: "success",
     message:
-      "Your application has been submitted. The committee will review it before any membership payment is requested.",
+      "Thank you. Your membership application has been submitted and will be reviewed by the committee.",
     fieldErrors: {},
     values: {},
   };
