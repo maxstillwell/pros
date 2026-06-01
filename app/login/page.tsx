@@ -41,16 +41,23 @@ async function sendMagicLink(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
+  const siteUrl = getSiteUrl().replace(/\/$/, "");
   const { error } = await supabase.auth.signInWithOtp({
     email: email.trim(),
     options: {
-      emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(
+      emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
         redirectTo,
       )}`,
     },
   });
 
   if (error) {
+    console.error("Supabase magic link failed", {
+      name: error.name,
+      message: error.message,
+      status: error.status,
+      code: error.code,
+    });
     redirect("/login?error=send-failed");
   }
 
@@ -63,7 +70,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const errorMessages: Record<string, string> = {
     "missing-email": "Enter an email address to receive a sign-in link.",
     "missing-config": "Supabase is not configured yet.",
-    "send-failed": "The sign-in link could not be sent.",
+    "send-failed":
+      "The sign-in link could not be sent. Check the Supabase Auth URL settings, email provider, and Vercel environment variables.",
   };
 
   return (
