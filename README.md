@@ -31,18 +31,19 @@ On this Windows machine, use `npm.cmd` if PowerShell blocks `npm.ps1`.
 Copy `.env.example` to `.env.local` and fill in:
 
 ```env
-NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SITE_URL=
+
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-STRIPE_MEMBERSHIP_PRICE_ID=
-
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
 ADMIN_EMAIL=
+
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_MEMBERSHIP_PRICE_ID=
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or `STRIPE_SECRET_KEY` to client
@@ -50,54 +51,202 @@ components.
 
 ## Supabase setup
 
-1. Create a Supabase project.
-2. Copy the project URL and anon key into `.env.local`.
-3. Copy the service role key into `.env.local`.
-4. Run the SQL migrations in `supabase/migrations/`.
+For deployment, use the manual setup files:
 
-With the Supabase CLI, the migration path is:
+- `supabase/manual_setup.sql`
+- `supabase/create_first_admin.sql`
+- `supabase/README.md`
 
-```bash
-supabase db push
-```
-
-Without the CLI, paste the migration SQL into the Supabase SQL editor and run
-it once.
+Open the `PROS` Supabase project, go to `SQL Editor`, and run
+`supabase/manual_setup.sql`. This creates the tables, indexes, triggers, RLS
+policies, and helper functions needed by the current app.
 
 ## Creating the First Admin User
 
-1. Create a user in Supabase Auth with the email address that should become admin.
-2. Add or update the matching row in `profiles`.
-3. Set `role = 'admin'` and `membership_status = 'active'`.
-
-If the profile row already exists:
-
-```sql
-update public.profiles
-set role = 'admin',
-    membership_status = 'active'
-where email = 'YOUR_ADMIN_EMAIL@example.com';
-```
-
-If the profile row may not exist yet, use an upsert:
-
-```sql
-insert into public.profiles (auth_user_id, email, full_name, role, membership_status)
-values (
-  'AUTH_USER_ID_HERE',
-  'admin@example.com',
-  'Admin Name',
-  'admin',
-  'active'
-)
-on conflict (email) do update
-set auth_user_id = excluded.auth_user_id,
-    full_name = excluded.full_name,
-    role = 'admin',
-    membership_status = 'active';
-```
+1. In Supabase, go to `Authentication -> Users -> Add user`.
+2. Create the admin email user.
+3. Copy the user's UUID.
+4. Open `supabase/create_first_admin.sql`.
+5. Replace `YOUR_AUTH_USER_ID`, `YOUR_ADMIN_EMAIL`, and `YOUR_ADMIN_NAME`.
+6. Run the edited SQL in Supabase `SQL Editor`.
 
 After that, `/admin` will show the admin dashboard.
+
+## Deployment Guide for GitHub, Vercel and Supabase
+
+Use this when moving the current PROS website from local development to the
+existing GitHub repository `PROS`, Vercel project `PROS`, and Supabase project
+`PROS`.
+
+### GitHub
+
+Only `.env.example` should be committed. Real secrets belong in Vercel or local
+`.env.local`, not GitHub.
+
+Check what will be committed:
+
+```powershell
+cd C:\Users\MaxQ\OneDrive\Documents\PROS
+git status
+git ls-files | findstr /i ".env"
+```
+
+The expected tracked env file is:
+
+```txt
+.env.example
+```
+
+Initial push to the existing GitHub repository:
+
+```powershell
+cd C:\Users\MaxQ\OneDrive\Documents\PROS
+git status
+git add .
+git commit -m "Prepare PROS website for Vercel deployment"
+git branch -M main
+git remote add origin https://github.com/YOUR_GITHUB_USERNAME/PROS.git
+git push -u origin main
+```
+
+If `origin` already exists:
+
+```powershell
+cd C:\Users\MaxQ\OneDrive\Documents\PROS
+git remote -v
+git remote set-url origin https://github.com/YOUR_GITHUB_USERNAME/PROS.git
+git push -u origin main
+```
+
+### Vercel
+
+1. Open Vercel project `PROS`.
+2. Connect the GitHub repository `PROS`.
+3. Keep the framework preset as `Next.js`.
+4. Keep the build command as the default:
+
+```txt
+npm run build
+```
+
+5. Keep output settings as the default for Next.js.
+6. Add the environment variables below.
+7. Deploy.
+8. After the first deployment, copy the production domain.
+9. Update `NEXT_PUBLIC_SITE_URL` to that production domain.
+10. Redeploy.
+
+The temporary Vercel domain may be `https://pros.vercel.app` or another
+generated Vercel URL.
+
+### Vercel Environment Variables
+
+Add these in `Vercel -> PROS project -> Settings -> Environment Variables`:
+
+```env
+NEXT_PUBLIC_SITE_URL=https://YOUR_VERCEL_DOMAIN
+
+NEXT_PUBLIC_SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+
+ADMIN_EMAIL=YOUR_ADMIN_EMAIL
+
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=
+
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_MEMBERSHIP_PRICE_ID=
+```
+
+Supabase keys go into Vercel, not GitHub. `SUPABASE_SERVICE_ROLE_KEY` must stay
+secret. Variables that start with `NEXT_PUBLIC_` are safe for browser use.
+Variables without `NEXT_PUBLIC_` are server-side only.
+
+Resend and Stripe values can stay empty until those services are ready. Resend
+is used for application emails when configured. Stripe is still a later phase.
+
+### Supabase
+
+Copy API values from:
+
+```txt
+Supabase -> PROS project -> Project Settings -> API
+```
+
+Copy:
+
+```txt
+Project URL
+anon public key
+service_role key
+```
+
+Create the admin auth user at:
+
+```txt
+Supabase -> Authentication -> Users -> Add user
+```
+
+Then run `supabase/create_first_admin.sql` after replacing the placeholders.
+
+For magic link login, also open:
+
+```txt
+Supabase -> Authentication -> URL Configuration
+```
+
+Set the site URL to your production domain and add this redirect URL:
+
+```txt
+https://YOUR_VERCEL_DOMAIN/auth/callback
+```
+
+### Manual Supabase Steps
+
+1. Copy Supabase API values from `Project Settings -> API`.
+2. Add them to Vercel as `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
+3. In Supabase `SQL Editor`, run `supabase/manual_setup.sql`.
+4. In `Authentication -> Users -> Add user`, create the first admin email user.
+5. Copy the Auth User ID.
+6. Run `supabase/create_first_admin.sql` after replacing the placeholders.
+7. Open `https://YOUR_VERCEL_DOMAIN/login`.
+8. After login, open `https://YOUR_VERCEL_DOMAIN/admin`.
+
+### Online Testing Checklist
+
+Public pages:
+
+```txt
+/
+/about
+/membership
+/apply
+/news
+/shop
+/contact
+```
+
+Membership application:
+
+1. Open `/apply`.
+2. Submit a test application.
+3. Confirm the success message appears.
+4. Confirm the application appears in Supabase `applications`.
+5. Confirm the application appears in `/admin/applications`.
+
+Admin:
+
+1. Open `/login`.
+2. Log in with the admin email.
+3. Open `/admin`.
+4. Open `/admin/applications`.
+5. Review a test application.
+6. Approve or reject it.
+7. Open `/admin/members`.
+8. Confirm the approved member appears.
 
 ## Membership Admin Workflow
 
@@ -204,14 +353,6 @@ The news-update email route remains a placeholder:
 - `POST /api/email/send-post-update`
 
 Next phase work should add explicit admin-triggered post/member update emails.
-
-## Vercel deployment
-
-1. Create a Vercel project from this repository.
-2. Add all environment variables in Vercel project settings.
-3. Run the Supabase migration before using the deployed site.
-4. Set `NEXT_PUBLIC_SITE_URL` to the deployed URL.
-5. Configure Supabase Auth redirect URLs for local and production URLs.
 
 ## Useful commands
 
