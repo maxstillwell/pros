@@ -10,6 +10,7 @@ type LoginPageProps = {
   searchParams: Promise<{
     sent?: string;
     error?: string;
+    detail?: string;
     redirectTo?: string;
   }>;
 };
@@ -24,6 +25,14 @@ function getSafeRedirect(value: FormDataEntryValue | string | undefined) {
   }
 
   return value;
+}
+
+function getSafeErrorDetail(value: string | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  return value.replace(/[^\w\s.,:;!?()[\]/-]/g, "").slice(0, 220);
 }
 
 async function sendMagicLink(formData: FormData) {
@@ -52,13 +61,17 @@ async function sendMagicLink(formData: FormData) {
   });
 
   if (error) {
+    const detail = encodeURIComponent(
+      `${error.status ?? "unknown"} ${error.code ?? ""} ${error.message}`.trim(),
+    );
+
     console.error("Supabase magic link failed", {
       name: error.name,
       message: error.message,
       status: error.status,
       code: error.code,
     });
-    redirect("/login?error=send-failed");
+    redirect(`/login?error=send-failed&detail=${detail}`);
   }
 
   redirect(`/login?sent=1&redirectTo=${encodeURIComponent(redirectTo)}`);
@@ -67,6 +80,7 @@ async function sendMagicLink(formData: FormData) {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const redirectTo = getSafeRedirect(params.redirectTo);
+  const errorDetail = getSafeErrorDetail(params.detail);
   const errorMessages: Record<string, string> = {
     "missing-email": "Enter an email address to receive a sign-in link.",
     "missing-config": "Supabase is not configured yet.",
@@ -97,7 +111,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
           {params.error ? (
             <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
-              {errorMessages[params.error] ?? "Something went wrong."}
+              <p>{errorMessages[params.error] ?? "Something went wrong."}</p>
+              {errorDetail ? (
+                <p className="mt-2 text-xs font-normal text-red-900/80">
+                  Supabase said: {errorDetail}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
