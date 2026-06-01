@@ -203,6 +203,12 @@ Set the site URL to your production domain and add this redirect URL:
 https://YOUR_VERCEL_DOMAIN/auth/callback
 ```
 
+If Supabase still rejects the magic link, also add:
+
+```txt
+https://YOUR_VERCEL_DOMAIN/**
+```
+
 ### Manual Supabase Steps
 
 1. Copy Supabase API values from `Project Settings -> API`.

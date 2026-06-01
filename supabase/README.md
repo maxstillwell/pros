@@ -67,6 +67,12 @@ Add this redirect URL:
 https://YOUR_VERCEL_DOMAIN/auth/callback
 ```
 
+If magic links are still rejected, also add this wildcard redirect:
+
+```txt
+https://YOUR_VERCEL_DOMAIN/**
+```
+
 For local testing, you can also add:
 
 ```txt
