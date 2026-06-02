@@ -1,9 +1,4 @@
-import { redirect } from "next/navigation";
 import { SiteShell } from "@/components/layout/site-shell";
-import {
-  createSupabaseServerClient,
-  hasSupabasePublicConfig,
-} from "@/lib/supabase/server";
 
 type LoginPageProps = {
   searchParams: Promise<{
@@ -31,62 +26,6 @@ function getSafeErrorDetail(value: string | undefined) {
   }
 
   return value.replace(/[^\w\s.,:;!?()[\]/-]/g, "").slice(0, 220);
-}
-
-async function signInWithPassword(formData: FormData) {
-  "use server";
-
-  const email = formData.get("email");
-  const password = formData.get("password");
-  const redirectTo = getSafeRedirect(formData.get("redirectTo") ?? "/admin");
-
-  if (typeof email !== "string" || !email.trim()) {
-    redirect(
-      `/login?error=missing-email&redirectTo=${encodeURIComponent(redirectTo)}`,
-    );
-  }
-
-  if (typeof password !== "string" || !password) {
-    redirect(
-      `/login?error=missing-password&redirectTo=${encodeURIComponent(
-        redirectTo,
-      )}`,
-    );
-  }
-
-  if (!hasSupabasePublicConfig()) {
-    redirect(
-      `/login?error=missing-config&redirectTo=${encodeURIComponent(
-        redirectTo,
-      )}`,
-    );
-  }
-
-  const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
-
-  if (error) {
-    const detail = encodeURIComponent(
-      `${error.status ?? "unknown"} ${error.code ?? ""} ${error.message}`.trim(),
-    );
-
-    console.error("Supabase password login failed", {
-      name: error.name,
-      message: error.message,
-      status: error.status,
-      code: error.code,
-    });
-    redirect(
-      `/login?error=login-failed&detail=${detail}&redirectTo=${encodeURIComponent(
-        redirectTo,
-      )}`,
-    );
-  }
-
-  redirect(redirectTo);
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -133,7 +72,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
           ) : null}
 
-          <form action={signInWithPassword} className="mt-6">
+          <form action="/api/auth/login" method="post" className="mt-6">
             <input type="hidden" name="redirectTo" value={redirectTo} />
             <label className="block">
               <span className="text-sm font-semibold text-forest-900">
@@ -142,6 +81,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <input
                 name="email"
                 type="email"
+                autoComplete="email"
                 required
                 className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
               />
@@ -153,6 +93,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <input
                 name="password"
                 type="password"
+                autoComplete="current-password"
                 required
                 className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
               />
