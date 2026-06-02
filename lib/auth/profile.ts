@@ -140,6 +140,63 @@ export async function getCurrentProfile(): Promise<ProfileAccess> {
 }
 
 export async function getAdminAccess(): Promise<AdminAccess> {
+  if (hasSupabaseServiceConfig()) {
+    const adminEmail = process.env.ADMIN_EMAIL;
+
+    if (adminEmail) {
+      const { data: adminProfile } = await createSupabaseServiceClient()
+        .from("profiles")
+        .select("*")
+        .eq("email", adminEmail)
+        .maybeSingle();
+
+      if (adminProfile) {
+        return {
+          debug: createAuthDebug({
+            fallbackCookie: "admin auth bypass",
+            hasSupabaseConfig: hasSupabasePublicConfig(),
+            profileLookup: "found by ADMIN_EMAIL",
+            sessionEmail: maskEmail(adminProfile.email),
+            sessionSource: "bypass",
+            supabaseUser: "not required",
+          }),
+          profile: { ...adminProfile, role: "admin" },
+          status: "ok",
+        };
+      }
+    }
+  }
+
+  if (process.env.ADMIN_EMAIL) {
+    return {
+      debug: createAuthDebug({
+        fallbackCookie: "admin auth bypass",
+        hasSupabaseConfig: hasSupabasePublicConfig(),
+        profileLookup: "using temporary admin profile",
+        sessionEmail: maskEmail(process.env.ADMIN_EMAIL),
+        sessionSource: "bypass",
+        supabaseUser: "not required",
+      }),
+      profile: {
+        auth_user_id: null,
+        created_at: new Date(0).toISOString(),
+        email: process.env.ADMIN_EMAIL,
+        full_name: "PROS Admin",
+        id: "",
+        linked_application_id: null,
+        membership_expires_at: null,
+        membership_started_at: null,
+        membership_status: "active",
+        notes: null,
+        phone: null,
+        role: "admin",
+        stripe_customer_id: null,
+        updated_at: new Date(0).toISOString(),
+      },
+      status: "ok",
+    };
+  }
+
   const access = await getCurrentProfile();
 
   if (access.status !== "ok") {

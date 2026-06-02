@@ -107,7 +107,7 @@ export async function approveApplication(formData: FormData) {
       status: "approved",
       admin_notes: notes,
       reviewed_at: new Date().toISOString(),
-      reviewed_by: adminProfile.id,
+      reviewed_by: adminProfile.id || null,
     })
     .eq("id", id);
 
@@ -155,7 +155,7 @@ export async function rejectApplication(formData: FormData) {
       status: "rejected",
       admin_notes: notes,
       reviewed_at: new Date().toISOString(),
-      reviewed_by: adminProfile.id,
+      reviewed_by: adminProfile.id || null,
     })
     .eq("id", id);
 
