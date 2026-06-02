@@ -36,6 +36,30 @@ function loginRedirect(
   return NextResponse.redirect(url, 303);
 }
 
+function loginSuccess(request: NextRequest, redirectTo: string) {
+  const targetUrl = new URL(redirectTo, request.url).toString();
+
+  return new NextResponse(
+    `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="0;url=${targetUrl}">
+    <title>Signing in</title>
+  </head>
+  <body>
+    <p>Signing you in...</p>
+    <p><a href="${targetUrl}">Continue to admin</a></p>
+  </body>
+</html>`,
+    {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+      },
+    },
+  );
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const email = formData.get("email");
@@ -52,7 +76,7 @@ export async function POST(request: NextRequest) {
     return loginRedirect(request, "missing-password", redirectTo);
   }
 
-  const response = NextResponse.redirect(new URL(redirectTo, request.url), 303);
+  const response = loginSuccess(request, redirectTo);
 
   if (adminEmail && adminPassword) {
     if (
