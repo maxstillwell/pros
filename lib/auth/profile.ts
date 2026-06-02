@@ -4,6 +4,7 @@ import {
   hasSupabasePublicConfig,
   hasSupabaseServiceConfig,
 } from "@/lib/supabase/server";
+import { getAdminSessionUser } from "@/lib/auth/admin-session";
 import type { Database } from "@/types/database";
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -27,8 +28,9 @@ export async function getCurrentProfile(): Promise<ProfileAccess> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const sessionUser = user ?? (await getAdminSessionUser());
 
-  if (!user) {
+  if (!sessionUser) {
     return { status: "unauthenticated", profile: null };
   }
 
@@ -39,18 +41,18 @@ export async function getCurrentProfile(): Promise<ProfileAccess> {
   const byAuthUser = await profileClient
     .from("profiles")
     .select("*")
-    .eq("auth_user_id", user.id)
+    .eq("auth_user_id", sessionUser.id)
     .maybeSingle();
 
   if (byAuthUser.data) {
     return { status: "ok", profile: byAuthUser.data };
   }
 
-  if (user.email) {
+  if (sessionUser.email) {
     const byEmail = await profileClient
       .from("profiles")
       .select("*")
-      .eq("email", user.email)
+      .eq("email", sessionUser.email)
       .maybeSingle();
 
     if (byEmail.data) {

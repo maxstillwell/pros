@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
+import { setAdminSessionCookie } from "@/lib/auth/admin-session";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 import type { Database } from "@/types/database";
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
     password,
   });
@@ -89,6 +90,13 @@ export async function POST(request: NextRequest) {
     url.searchParams.set("detail", detail.slice(0, 220));
     url.searchParams.set("redirectTo", redirectTo);
     return NextResponse.redirect(url, 303);
+  }
+
+  if (data.user?.email) {
+    setAdminSessionCookie(response, {
+      email: data.user.email,
+      id: data.user.id,
+    });
   }
 
   return response;
