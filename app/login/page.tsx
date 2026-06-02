@@ -35,6 +35,14 @@ function getSafeErrorDetail(value: string | undefined) {
   return value.replace(/[^\w\s.,:;!?()[\]/-]/g, "").slice(0, 220);
 }
 
+function getSiteOrigin() {
+  try {
+    return new URL(getSiteUrl()).origin;
+  } catch {
+    return getSiteUrl().replace(/\/$/, "");
+  }
+}
+
 async function sendMagicLink(formData: FormData) {
   "use server";
 
@@ -50,11 +58,11 @@ async function sendMagicLink(formData: FormData) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const siteUrl = getSiteUrl().replace(/\/$/, "");
+  const callbackUrl = new URL("/auth/callback", getSiteOrigin()).toString();
   const { error } = await supabase.auth.signInWithOtp({
     email: email.trim(),
     options: {
-      emailRedirectTo: `${siteUrl}/auth/callback`,
+      emailRedirectTo: callbackUrl,
     },
   });
 
@@ -84,6 +92,10 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     "missing-config": "Supabase is not configured yet.",
     "send-failed":
       "The sign-in link could not be sent. Check the Supabase Auth URL settings, email provider, and Vercel environment variables.",
+    "callback-failed":
+      "The sign-in link opened, but Supabase could not finish the login.",
+    "missing-code":
+      "The sign-in link opened without a login code. Send yourself a fresh sign-in link and use the newest email.",
   };
 
   return (
