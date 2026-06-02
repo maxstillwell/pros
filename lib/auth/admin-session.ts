@@ -92,27 +92,58 @@ export function clearAdminSessionCookie(response: NextResponse) {
 }
 
 export async function getAdminSessionUser(): Promise<AdminSessionUser | null> {
+  const state = await getAdminSessionState();
+
+  return state.user;
+}
+
+export async function getAdminSessionState(): Promise<{
+  hasCookie: boolean;
+  hasSecret: boolean;
+  reason: string;
+  user: AdminSessionUser | null;
+}> {
   const secret = getSigningSecret();
 
   if (!secret) {
-    return null;
+    return {
+      hasCookie: false,
+      hasSecret: false,
+      reason: "missing signing secret",
+      user: null,
+    };
   }
 
   const cookieStore = await cookies();
   const cookieValue = cookieStore.get(adminSessionCookieName)?.value;
 
   if (!cookieValue) {
-    return null;
+    return {
+      hasCookie: false,
+      hasSecret: true,
+      reason: "missing cookie",
+      user: null,
+    };
   }
 
   const [encodedPayload, signature] = cookieValue.split(".");
 
   if (!encodedPayload || !signature) {
-    return null;
+    return {
+      hasCookie: true,
+      hasSecret: true,
+      reason: "malformed cookie",
+      user: null,
+    };
   }
 
   if (!verifySignature(encodedPayload, signature, secret)) {
-    return null;
+    return {
+      hasCookie: true,
+      hasSecret: true,
+      reason: "invalid signature",
+      user: null,
+    };
   }
 
   try {
@@ -127,14 +158,29 @@ export async function getAdminSessionUser(): Promise<AdminSessionUser | null> {
       typeof payload.exp !== "number" ||
       payload.exp < Math.floor(Date.now() / 1000)
     ) {
-      return null;
+      return {
+        hasCookie: true,
+        hasSecret: true,
+        reason: "expired or invalid payload",
+        user: null,
+      };
     }
 
     return {
-      email: payload.email,
-      id: payload.sub,
+      hasCookie: true,
+      hasSecret: true,
+      reason: "valid",
+      user: {
+        email: payload.email,
+        id: payload.sub,
+      },
     };
   } catch {
-    return null;
+    return {
+      hasCookie: true,
+      hasSecret: true,
+      reason: "payload parse failed",
+      user: null,
+    };
   }
 }

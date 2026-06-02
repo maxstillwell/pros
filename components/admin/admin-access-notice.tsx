@@ -26,6 +26,40 @@ export function AdminAccessNotice({ access }: { access: AdminAccess }) {
       <p className="mt-3 text-sm leading-6 text-forest-900/72">
         {messages[access.status]}
       </p>
+      <dl className="mt-5 grid gap-2 rounded-md border border-forest-900/10 bg-forest-50 p-4 text-xs text-forest-900/75 sm:grid-cols-2">
+        <div>
+          <dt className="font-semibold">Build</dt>
+          <dd>{access.debug.build}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Supabase config</dt>
+          <dd>{access.debug.hasSupabaseConfig ? "found" : "missing"}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Service config</dt>
+          <dd>{access.debug.hasServiceConfig ? "found" : "missing"}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Supabase user</dt>
+          <dd>{access.debug.supabaseUser}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Fallback cookie</dt>
+          <dd>{access.debug.fallbackCookie}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Session source</dt>
+          <dd>{access.debug.sessionSource}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Session email</dt>
+          <dd>{access.debug.sessionEmail ?? "none"}</dd>
+        </div>
+        <div>
+          <dt className="font-semibold">Profile lookup</dt>
+          <dd>{access.debug.profileLookup}</dd>
+        </div>
+      </dl>
       {access.status === "unauthenticated" ? (
         <Link
           href="/login"
