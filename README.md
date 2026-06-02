@@ -64,7 +64,7 @@ policies, and helper functions needed by the current app.
 ## Creating the First Admin User
 
 1. In Supabase, go to `Authentication -> Users -> Add user`.
-2. Create the admin email user.
+2. Create the admin email user and set a password.
 3. Copy the user's UUID.
 4. Open `supabase/create_first_admin.sql`.
 5. Replace `YOUR_AUTH_USER_ID`, `YOUR_ADMIN_EMAIL`, and `YOUR_ADMIN_NAME`.
@@ -183,7 +183,7 @@ anon public key
 service_role key
 ```
 
-Create the admin auth user at:
+Create the admin auth user with a password at:
 
 ```txt
 Supabase -> Authentication -> Users -> Add user
@@ -191,23 +191,7 @@ Supabase -> Authentication -> Users -> Add user
 
 Then run `supabase/create_first_admin.sql` after replacing the placeholders.
 
-For magic link login, also open:
-
-```txt
-Supabase -> Authentication -> URL Configuration
-```
-
-Set the site URL to your production domain and add this redirect URL:
-
-```txt
-https://YOUR_VERCEL_DOMAIN/auth/callback
-```
-
-If Supabase still rejects the magic link, also add:
-
-```txt
-https://YOUR_VERCEL_DOMAIN/**
-```
+Password login does not require Supabase magic-link redirect URL setup.
 
 ### Manual Supabase Steps
 
@@ -219,7 +203,8 @@ https://YOUR_VERCEL_DOMAIN/**
 5. Copy the Auth User ID.
 6. Run `supabase/create_first_admin.sql` after replacing the placeholders.
 7. Open `https://YOUR_VERCEL_DOMAIN/login`.
-8. After login, open `https://YOUR_VERCEL_DOMAIN/admin`.
+8. Sign in with the admin email and password.
+9. After login, open `https://YOUR_VERCEL_DOMAIN/admin`.
 
 ### Online Testing Checklist
 
@@ -246,7 +231,7 @@ Membership application:
 Admin:
 
 1. Open `/login`.
-2. Log in with the admin email.
+2. Log in with the admin email and password.
 3. Open `/admin`.
 4. Open `/admin/applications`.
 5. Review a test application.

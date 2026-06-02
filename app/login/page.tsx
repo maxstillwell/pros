@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { SiteShell } from "@/components/layout/site-shell";
-import { getSiteUrl } from "@/lib/supabase/env";
 import {
   createSupabaseServerClient,
   hasSupabasePublicConfig,
@@ -8,7 +7,6 @@ import {
 
 type LoginPageProps = {
   searchParams: Promise<{
-    sent?: string;
     error?: string;
     detail?: string;
     redirectTo?: string;
@@ -35,35 +33,39 @@ function getSafeErrorDetail(value: string | undefined) {
   return value.replace(/[^\w\s.,:;!?()[\]/-]/g, "").slice(0, 220);
 }
 
-function getSiteOrigin() {
-  try {
-    return new URL(getSiteUrl()).origin;
-  } catch {
-    return getSiteUrl().replace(/\/$/, "");
-  }
-}
-
-async function sendMagicLink(formData: FormData) {
+async function signInWithPassword(formData: FormData) {
   "use server";
 
   const email = formData.get("email");
+  const password = formData.get("password");
   const redirectTo = getSafeRedirect(formData.get("redirectTo") ?? "/admin");
 
   if (typeof email !== "string" || !email.trim()) {
-    redirect("/login?error=missing-email");
+    redirect(
+      `/login?error=missing-email&redirectTo=${encodeURIComponent(redirectTo)}`,
+    );
+  }
+
+  if (typeof password !== "string" || !password) {
+    redirect(
+      `/login?error=missing-password&redirectTo=${encodeURIComponent(
+        redirectTo,
+      )}`,
+    );
   }
 
   if (!hasSupabasePublicConfig()) {
-    redirect("/login?error=missing-config");
+    redirect(
+      `/login?error=missing-config&redirectTo=${encodeURIComponent(
+        redirectTo,
+      )}`,
+    );
   }
 
   const supabase = await createSupabaseServerClient();
-  const callbackUrl = new URL("/auth/callback", getSiteOrigin()).toString();
-  const { error } = await supabase.auth.signInWithOtp({
+  const { error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
-    options: {
-      emailRedirectTo: callbackUrl,
-    },
+    password,
   });
 
   if (error) {
@@ -71,16 +73,20 @@ async function sendMagicLink(formData: FormData) {
       `${error.status ?? "unknown"} ${error.code ?? ""} ${error.message}`.trim(),
     );
 
-    console.error("Supabase magic link failed", {
+    console.error("Supabase password login failed", {
       name: error.name,
       message: error.message,
       status: error.status,
       code: error.code,
     });
-    redirect(`/login?error=send-failed&detail=${detail}`);
+    redirect(
+      `/login?error=login-failed&detail=${detail}&redirectTo=${encodeURIComponent(
+        redirectTo,
+      )}`,
+    );
   }
 
-  redirect(`/login?sent=1&redirectTo=${encodeURIComponent(redirectTo)}`);
+  redirect(redirectTo);
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -88,14 +94,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const redirectTo = getSafeRedirect(params.redirectTo);
   const errorDetail = getSafeErrorDetail(params.detail);
   const errorMessages: Record<string, string> = {
-    "missing-email": "Enter an email address to receive a sign-in link.",
+    "missing-email": "Enter your admin email address.",
+    "missing-password": "Enter your password.",
     "missing-config": "Supabase is not configured yet.",
+    "login-failed":
+      "The email or password did not work. Check the admin user in Supabase Authentication.",
     "send-failed":
-      "The sign-in link could not be sent. Check the Supabase Auth URL settings, email provider, and Vercel environment variables.",
+      "The old magic-link login could not be sent. Use email and password instead.",
     "callback-failed":
-      "The sign-in link opened, but Supabase could not finish the login.",
+      "The old sign-in link opened, but Supabase could not finish the login. Use email and password instead.",
     "missing-code":
-      "The sign-in link opened without a login code. Send yourself a fresh sign-in link and use the newest email.",
+      "The old sign-in link opened without a login code. Use email and password instead.",
   };
 
   return (
@@ -106,18 +115,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Admin login
           </p>
           <h1 className="mt-3 text-3xl font-semibold text-forest-900">
-            Sign in with email.
+            Sign in.
           </h1>
           <p className="mt-3 text-sm leading-6 text-forest-900/70">
-            PROS uses Supabase magic links. Admin access is controlled by the
-            matching profile row having role set to admin.
+            Use the admin email and password created in Supabase. Admin access
+            is controlled by the matching profile row having role set to admin.
           </p>
-
-          {params.sent ? (
-            <div className="mt-5 rounded-md border border-forest-700/20 bg-forest-50 p-4 text-sm font-medium text-forest-900">
-              Check your inbox for a secure sign-in link.
-            </div>
-          ) : null}
 
           {params.error ? (
             <div className="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
@@ -130,7 +133,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
           ) : null}
 
-          <form action={sendMagicLink} className="mt-6">
+          <form action={signInWithPassword} className="mt-6">
             <input type="hidden" name="redirectTo" value={redirectTo} />
             <label className="block">
               <span className="text-sm font-semibold text-forest-900">
@@ -143,11 +146,22 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
               />
             </label>
+            <label className="mt-4 block">
+              <span className="text-sm font-semibold text-forest-900">
+                Password
+              </span>
+              <input
+                name="password"
+                type="password"
+                required
+                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+              />
+            </label>
             <button
               type="submit"
               className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
             >
-              Send sign-in link
+              Sign in
             </button>
           </form>
         </div>

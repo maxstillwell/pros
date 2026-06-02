@@ -16,8 +16,9 @@ Use this if you do not want to use the Supabase CLI.
 1. In Supabase, go to `Authentication -> Users`.
 2. Click `Add user`.
 3. Enter the admin email address.
-4. Create the user.
-5. Open that user and copy the user UUID.
+4. Set a password for the user.
+5. Create the user.
+6. Open that user and copy the user UUID.
 
 ## Step 3: Create the admin profile
 
@@ -51,37 +52,14 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 Keep `SUPABASE_SERVICE_ROLE_KEY` secret. Do not put it in GitHub.
 
-## Step 5: Configure login redirects
+## Step 5: Password login
 
-In Supabase, go to `Authentication -> URL Configuration`.
-
-Set the site URL to your Vercel production URL, for example:
-
-```txt
-https://pros.vercel.app
-```
-
-Add this redirect URL:
-
-```txt
-https://YOUR_VERCEL_DOMAIN/auth/callback
-```
-
-If magic links are still rejected, also add this wildcard redirect:
-
-```txt
-https://YOUR_VERCEL_DOMAIN/**
-```
-
-For local testing, you can also add:
-
-```txt
-http://localhost:3000/auth/callback
-```
+The admin login uses email and password. You do not need to configure Supabase
+magic-link redirect URLs for the admin area.
 
 ## Step 6: Redeploy and test
 
 1. In Vercel, redeploy the `PROS` project.
 2. Open `https://YOUR_VERCEL_DOMAIN/login`.
-3. Send a magic link to the admin email.
+3. Sign in with the admin email and password.
 4. After login, open `https://YOUR_VERCEL_DOMAIN/admin`.

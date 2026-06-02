@@ -5,10 +5,11 @@ const messages: Record<AdminAccess["status"], string> = {
   ok: "",
   missing_config:
     "Supabase is not configured yet. Add the environment variables before using the admin dashboard.",
-  unauthenticated: "Sign in with an admin email address to access this area.",
+  unauthenticated: "Sign in with your admin email and password to access this area.",
   missing_profile:
-    "Your signed-in account does not have a matching profile record yet.",
-  forbidden: "Your profile does not have admin access.",
+    "You are signed in, but this Auth user does not have a matching profile row. Run supabase/create_first_admin.sql with this user's Auth UUID and email.",
+  forbidden:
+    "You are signed in, but the matching profile row is not role = admin. Run supabase/create_first_admin.sql or update the profile role in Supabase.",
 };
 
 export function AdminAccessNotice({ access }: { access: AdminAccess }) {
