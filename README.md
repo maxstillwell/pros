@@ -40,6 +40,8 @@ SUPABASE_SERVICE_ROLE_KEY=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
 ADMIN_EMAIL=
+ADMIN_PASSWORD=
+ADMIN_SESSION_SECRET=
 
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
@@ -63,12 +65,13 @@ policies, and helper functions needed by the current app.
 
 ## Creating the First Admin User
 
-1. In Supabase, go to `Authentication -> Users -> Add user`.
-2. Create the admin email user and set a password.
-3. Copy the user's UUID.
-4. Open `supabase/create_first_admin.sql`.
-5. Replace `YOUR_AUTH_USER_ID`, `YOUR_ADMIN_EMAIL`, and `YOUR_ADMIN_NAME`.
-6. Run the edited SQL in Supabase `SQL Editor`.
+1. In Vercel, set `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+2. In Supabase, go to `Authentication -> Users -> Add user`.
+3. Create the admin email user.
+4. Copy the user's UUID.
+5. Open `supabase/create_first_admin.sql`.
+6. Replace `YOUR_AUTH_USER_ID`, `YOUR_ADMIN_EMAIL`, and `YOUR_ADMIN_NAME`.
+7. Run the edited SQL in Supabase `SQL Editor`.
 
 After that, `/admin` will show the admin dashboard.
 
@@ -151,6 +154,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 
 ADMIN_EMAIL=YOUR_ADMIN_EMAIL
+ADMIN_PASSWORD=YOUR_STRONG_ADMIN_PASSWORD
+ADMIN_SESSION_SECRET=YOUR_LONG_RANDOM_SECRET
 
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
@@ -164,8 +169,11 @@ Supabase keys go into Vercel, not GitHub. `SUPABASE_SERVICE_ROLE_KEY` must stay
 secret. Variables that start with `NEXT_PUBLIC_` are safe for browser use.
 Variables without `NEXT_PUBLIC_` are server-side only.
 
-Resend and Stripe values can stay empty until those services are ready. Resend
-is used for application emails when configured. Stripe is still a later phase.
+`ADMIN_PASSWORD` is the password for `/login`. Use a strong password.
+`ADMIN_SESSION_SECRET` can be any long random string and is used to sign the
+admin session cookie. Resend and Stripe values can stay empty until those
+services are ready. Resend is used for application emails when configured.
+Stripe is still a later phase.
 
 ### Supabase
 
@@ -183,7 +191,7 @@ anon public key
 service_role key
 ```
 
-Create the admin auth user with a password at:
+Create the admin auth user at:
 
 ```txt
 Supabase -> Authentication -> Users -> Add user
@@ -203,7 +211,7 @@ Password login does not require Supabase magic-link redirect URL setup.
 5. Copy the Auth User ID.
 6. Run `supabase/create_first_admin.sql` after replacing the placeholders.
 7. Open `https://YOUR_VERCEL_DOMAIN/login`.
-8. Sign in with the admin email and password.
+8. Sign in with `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 9. After login, open `https://YOUR_VERCEL_DOMAIN/admin`.
 
 ### Online Testing Checklist
@@ -231,7 +239,7 @@ Membership application:
 Admin:
 
 1. Open `/login`.
-2. Log in with the admin email and password.
+2. Log in with `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 3. Open `/admin`.
 4. Open `/admin/applications`.
 5. Review a test application.
@@ -287,6 +295,8 @@ Application emails use Resend when these variables are configured:
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
 ADMIN_EMAIL=
+ADMIN_PASSWORD=
+ADMIN_SESSION_SECRET=
 NEXT_PUBLIC_SITE_URL=
 ```
 

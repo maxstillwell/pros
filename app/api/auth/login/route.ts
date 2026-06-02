@@ -41,6 +41,8 @@ export async function POST(request: NextRequest) {
   const email = formData.get("email");
   const password = formData.get("password");
   const redirectTo = getSafeRedirect(formData.get("redirectTo"));
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
 
   if (typeof email !== "string" || !email.trim()) {
     return loginRedirect(request, "missing-email", redirectTo);
@@ -50,12 +52,34 @@ export async function POST(request: NextRequest) {
     return loginRedirect(request, "missing-password", redirectTo);
   }
 
+  const response = NextResponse.redirect(new URL(redirectTo, request.url), 303);
+
+  if (adminEmail && adminPassword) {
+    if (
+      email.trim().toLowerCase() !== adminEmail.trim().toLowerCase() ||
+      password !== adminPassword
+    ) {
+      return loginRedirect(
+        request,
+        "login-failed",
+        redirectTo,
+        "The admin email or password is incorrect.",
+      );
+    }
+
+    setAdminSessionCookie(response, {
+      email: adminEmail.trim(),
+      id: `admin:${adminEmail.trim().toLowerCase()}`,
+    });
+
+    return response;
+  }
+
   const config = getSupabasePublicConfig();
   if (!config) {
     return loginRedirect(request, "missing-config", redirectTo);
   }
 
-  const response = NextResponse.redirect(new URL(redirectTo, request.url), 303);
   const supabase = createServerClient<Database>(config.url, config.anonKey, {
     cookies: {
       getAll() {

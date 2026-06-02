@@ -13,12 +13,14 @@ Use this if you do not want to use the Supabase CLI.
 
 ## Step 2: Create the first admin login user
 
+The website login uses `ADMIN_EMAIL` and `ADMIN_PASSWORD` from Vercel. Supabase
+still needs a matching Auth user/profile for admin ownership records.
+
 1. In Supabase, go to `Authentication -> Users`.
 2. Click `Add user`.
 3. Enter the admin email address.
-4. Set a password for the user.
-5. Create the user.
-6. Open that user and copy the user UUID.
+4. Create the user.
+5. Open that user and copy the user UUID.
 
 ## Step 3: Create the admin profile
 
@@ -48,18 +50,21 @@ Add them in Vercel under `PROS -> Settings -> Environment Variables`.
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+ADMIN_SESSION_SECRET=
 ```
 
 Keep `SUPABASE_SERVICE_ROLE_KEY` secret. Do not put it in GitHub.
 
 ## Step 5: Password login
 
-The admin login uses email and password. You do not need to configure Supabase
-magic-link redirect URLs for the admin area.
+The admin login uses `ADMIN_EMAIL` and `ADMIN_PASSWORD` from Vercel. You do not
+need to configure Supabase magic-link redirect URLs for the admin area.
 
 ## Step 6: Redeploy and test
 
 1. In Vercel, redeploy the `PROS` project.
 2. Open `https://YOUR_VERCEL_DOMAIN/login`.
-3. Sign in with the admin email and password.
+3. Sign in with `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 4. After login, open `https://YOUR_VERCEL_DOMAIN/admin`.

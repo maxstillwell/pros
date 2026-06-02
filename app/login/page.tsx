@@ -37,7 +37,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     "missing-password": "Enter your password.",
     "missing-config": "Supabase is not configured yet.",
     "login-failed":
-      "The email or password did not work. Check the admin user in Supabase Authentication.",
+      "The email or password did not work. Check ADMIN_EMAIL and ADMIN_PASSWORD in Vercel.",
     "send-failed":
       "The old magic-link login could not be sent. Use email and password instead.",
     "callback-failed":
@@ -57,8 +57,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Sign in.
           </h1>
           <p className="mt-3 text-sm leading-6 text-forest-900/70">
-            Use the admin email and password created in Supabase. Admin access
-            is controlled by the matching profile row having role set to admin.
+            Use the admin email and password set in Vercel. Admin access is
+            controlled by the matching profile row having role set to admin.
           </p>
 
           {params.error ? (
