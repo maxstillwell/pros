@@ -81,7 +81,7 @@ export default async function AdminMembersPage({
 
   if (search) {
     query = query.or(
-      `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`,
+      `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,member_number.ilike.%${search}%`,
     );
   }
 
@@ -151,13 +151,15 @@ export default async function AdminMembersPage({
             <table className="w-full min-w-[76rem] text-left text-sm">
               <thead className="border-b border-forest-900/10 text-forest-900/60">
                 <tr>
+                  <th className="py-3 pr-4 font-semibold">Member #</th>
                   <th className="py-3 pr-4 font-semibold">Name</th>
                   <th className="py-3 pr-4 font-semibold">Email</th>
                   <th className="py-3 pr-4 font-semibold">Phone</th>
-                  <th className="py-3 pr-4 font-semibold">Status</th>
+                  <th className="py-3 pr-4 font-semibold">Member Status</th>
+                  <th className="py-3 pr-4 font-semibold">Payment</th>
                   <th className="py-3 pr-4 font-semibold">Start</th>
                   <th className="py-3 pr-4 font-semibold">Expiry</th>
-                  <th className="py-3 pr-4 font-semibold">Stripe customer</th>
+                  <th className="py-3 pr-4 font-semibold">Application</th>
                   <th className="py-3 pr-4 font-semibold">Created</th>
                   <th className="py-3 pr-4 font-semibold">Actions</th>
                 </tr>
@@ -168,6 +170,9 @@ export default async function AdminMembersPage({
                     key={member.id}
                     className="border-b border-forest-900/10 last:border-b-0"
                   >
+                    <td className="py-3 pr-4 font-semibold text-clay">
+                      {member.member_number ?? "Not set"}
+                    </td>
                     <td className="py-3 pr-4 font-medium">
                       {member.full_name ?? "Not set"}
                     </td>
@@ -180,6 +185,9 @@ export default async function AdminMembersPage({
                     <td className="py-3 pr-4">
                       <StatusBadge status={member.membership_status} />
                     </td>
+                    <td className="py-3 pr-4">
+                      <StatusBadge status={member.payment_status} />
+                    </td>
                     <td className="py-3 pr-4 text-forest-900/72">
                       {formatDate(member.membership_started_at)}
                     </td>
@@ -187,7 +195,16 @@ export default async function AdminMembersPage({
                       {formatDate(member.membership_expires_at)}
                     </td>
                     <td className="py-3 pr-4 text-forest-900/72">
-                      {member.stripe_customer_id ?? "Not set"}
+                      {member.linked_application_id ? (
+                        <Link
+                          href={`/admin/applications/${member.linked_application_id}`}
+                          className="font-semibold text-clay hover:text-forest-900"
+                        >
+                          View
+                        </Link>
+                      ) : (
+                        "Not linked"
+                      )}
                     </td>
                     <td className="py-3 pr-4 text-forest-900/72">
                       {formatDateTime(member.created_at)}

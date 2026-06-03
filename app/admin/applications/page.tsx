@@ -63,7 +63,7 @@ export default async function AdminApplicationsPage({
 
   if (search) {
     query = query.or(
-      `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,phone_number.ilike.%${search}%`,
+      `full_name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,phone_number.ilike.%${search}%,member_number.ilike.%${search}%`,
     );
   }
 
@@ -120,13 +120,15 @@ export default async function AdminApplicationsPage({
           </p>
         ) : applications?.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[56rem] text-left text-sm">
+            <table className="w-full min-w-[68rem] text-left text-sm">
               <thead className="border-b border-forest-900/10 text-forest-900/60">
                 <tr>
+                  <th className="py-3 pr-4 font-semibold">Member #</th>
                   <th className="py-3 pr-4 font-semibold">Applicant</th>
                   <th className="py-3 pr-4 font-semibold">Email</th>
                   <th className="py-3 pr-4 font-semibold">Phone</th>
                   <th className="py-3 pr-4 font-semibold">Status</th>
+                  <th className="py-3 pr-4 font-semibold">Payment</th>
                   <th className="py-3 pr-4 font-semibold">Submitted</th>
                   <th className="py-3 pr-4 font-semibold">Reviewed</th>
                   <th className="py-3 pr-4 font-semibold">Actions</th>
@@ -138,6 +140,9 @@ export default async function AdminApplicationsPage({
                     key={application.id}
                     className="border-b border-forest-900/10 last:border-b-0"
                   >
+                    <td className="py-3 pr-4 font-semibold text-clay">
+                      {application.member_number ?? "Not set"}
+                    </td>
                     <td className="py-3 pr-4 font-medium">
                       {application.full_name}
                     </td>
@@ -151,6 +156,9 @@ export default async function AdminApplicationsPage({
                     </td>
                     <td className="py-3 pr-4">
                       <StatusBadge status={application.status} />
+                    </td>
+                    <td className="py-3 pr-4">
+                      <StatusBadge status={application.payment_status} />
                     </td>
                     <td className="py-3 pr-4 text-forest-900/72">
                       {formatDateTime(application.created_at)}

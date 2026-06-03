@@ -2,17 +2,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminAccessNotice } from "@/components/admin/admin-access-notice";
 import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
   markMemberActive,
   markMemberCancelled,
   markMemberExpired,
+  markMemberManuallyPaid,
+  resendMemberPaymentEmail,
   updateMember,
 } from "@/app/admin/members/actions";
 import { getAdminAccess } from "@/lib/auth/profile";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
-import type { ApplicationStatus } from "@/types/database";
+import type { ApplicationStatus, PaymentStatus } from "@/types/database";
 
 type AdminMemberDetailPageProps = {
   params: Promise<{
@@ -31,6 +34,14 @@ const memberStatuses: ApplicationStatus[] = [
   "expired",
   "cancelled",
   "rejected",
+];
+const paymentStatuses: PaymentStatus[] = [
+  "not_required",
+  "pending_payment",
+  "paid",
+  "failed",
+  "refunded",
+  "cancelled",
 ];
 
 function dateInputValue(value: string | null) {
@@ -90,6 +101,7 @@ export default async function AdminMemberDetailPage({
     .select("*")
     .eq("profile_id", member.id)
     .order("created_at", { ascending: false });
+  const canTakePaymentAction = member.payment_status !== "paid";
 
   return (
     <div>
@@ -100,7 +112,13 @@ export default async function AdminMemberDetailPage({
         </h1>
         <div className="mt-3">
           <StatusBadge status={member.membership_status} />
+          <span className="ml-2 inline-flex">
+            <StatusBadge status={member.payment_status} />
+          </span>
         </div>
+        <p className="mt-3 text-sm font-semibold text-clay">
+          {member.member_number ?? "No member number yet"}
+        </p>
         <Link
           href="/admin/members"
           className="mt-4 inline-flex text-sm font-semibold text-clay hover:text-forest-900"
@@ -130,6 +148,16 @@ export default async function AdminMemberDetailPage({
             Contact Details
           </h2>
           <div className="mt-5 grid gap-5 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-semibold text-forest-900">
+                Member number
+              </span>
+              <input
+                name="member_number"
+                defaultValue={member.member_number ?? ""}
+                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+              />
+            </label>
             <label className="block">
               <span className="text-sm font-semibold text-forest-900">
                 Name
@@ -178,6 +206,22 @@ export default async function AdminMemberDetailPage({
             </label>
             <label className="block">
               <span className="text-sm font-semibold text-forest-900">
+                Payment status
+              </span>
+              <select
+                name="payment_status"
+                defaultValue={member.payment_status}
+                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+              >
+                {paymentStatuses.map((status) => (
+                  <option key={status} value={status}>
+                    {status.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-forest-900">
                 Membership start date
               </span>
               <input
@@ -198,13 +242,23 @@ export default async function AdminMemberDetailPage({
                 className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
               />
             </label>
-            <label className="block md:col-span-2">
+            <label className="block">
               <span className="text-sm font-semibold text-forest-900">
                 Stripe customer ID
               </span>
               <input
                 name="stripe_customer_id"
                 defaultValue={member.stripe_customer_id ?? ""}
+                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-semibold text-forest-900">
+                Stripe subscription ID
+              </span>
+              <input
+                name="stripe_subscription_id"
+                defaultValue={member.stripe_subscription_id ?? ""}
                 className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
               />
             </label>
@@ -247,6 +301,23 @@ export default async function AdminMemberDetailPage({
             >
               Mark Cancelled
             </ConfirmSubmitButton>
+            {canTakePaymentAction ? (
+              <>
+                <button
+                  formAction={resendMemberPaymentEmail}
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-clay px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+                >
+                  Resend Payment Email
+                </button>
+                <ConfirmSubmitButton
+                  formAction={markMemberManuallyPaid}
+                  message="Mark this membership payment as paid manually?"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
+                >
+                  Mark Payment Manually Paid
+                </ConfirmSubmitButton>
+              </>
+            ) : null}
           </div>
         </form>
 
@@ -260,6 +331,9 @@ export default async function AdminMemberDetailPage({
                 <p>{linkedApplication.full_name}</p>
                 <p>Submitted: {formatDateTime(linkedApplication.created_at)}</p>
                 <p>Reviewed: {formatDateTime(linkedApplication.reviewed_at)}</p>
+                <p>Application status: {linkedApplication.status}</p>
+                <p>Payment status: {linkedApplication.payment_status}</p>
+                <p>Member number: {linkedApplication.member_number ?? "Not set"}</p>
                 <Link
                   href={`/admin/applications/${linkedApplication.id}`}
                   className="mt-3 inline-flex font-semibold text-clay hover:text-forest-900"
@@ -313,9 +387,61 @@ export default async function AdminMemberDetailPage({
             <h2 className="text-xl font-semibold text-forest-900">
               Payment Details
             </h2>
-            <p className="mt-3 text-sm leading-6 text-forest-900/70">
-              Stripe customer ID: {member.stripe_customer_id ?? "Not set"}
-            </p>
+            <dl className="mt-4 grid gap-3 text-sm">
+              <div>
+                <dt className="font-semibold text-forest-900">Member number</dt>
+                <dd className="text-forest-900/72">
+                  {member.member_number ?? "Not set"}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-forest-900">Payment status</dt>
+                <dd className="mt-1">
+                  <StatusBadge status={member.payment_status} />
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-forest-900">Membership dates</dt>
+                <dd className="text-forest-900/72">
+                  {formatDate(member.membership_started_at)} to{" "}
+                  {formatDate(member.membership_expires_at)}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-forest-900">Stripe customer</dt>
+                <dd className="break-all text-forest-900/72">
+                  {member.stripe_customer_id ?? "Not set"}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-forest-900">
+                  Stripe subscription
+                </dt>
+                <dd className="break-all text-forest-900/72">
+                  {member.stripe_subscription_id ?? "Not set"}
+                </dd>
+              </div>
+            </dl>
+            {linkedApplication?.stripe_payment_link ? (
+              <div className="mt-5 grid gap-3">
+                <input
+                  readOnly
+                  value={linkedApplication.stripe_payment_link}
+                  className="min-h-11 w-full rounded-md border border-forest-900/20 bg-forest-50 px-3 py-2 text-sm text-forest-900/75"
+                />
+                <div className="flex flex-wrap gap-3">
+                  <CopyLinkButton value={linkedApplication.stripe_payment_link} />
+                  <a
+                    href={linkedApplication.stripe_payment_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-10 items-center justify-center rounded-md border border-forest-900/20 px-4 py-2 text-sm font-semibold text-clay transition hover:bg-forest-50"
+                  >
+                    Open payment link
+                  </a>
+                </div>
+              </div>
+            ) : null}
             {payments?.length ? (
               <div className="mt-4 grid gap-3">
                 {payments.map((payment) => (
@@ -328,7 +454,9 @@ export default async function AdminMemberDetailPage({
                       {dollarsFromCents(payment.amount)}
                     </p>
                     <p>Type: {payment.payment_type ?? "Not set"}</p>
+                    <p>Member #: {payment.member_number ?? "Not set"}</p>
                     <p>Paid: {formatDateTime(payment.paid_at)}</p>
+                    <p>Created: {formatDateTime(payment.created_at)}</p>
                   </div>
                 ))}
               </div>

@@ -2,10 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminAccessNotice } from "@/components/admin/admin-access-notice";
 import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
+import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
   approveApplication,
+  markApplicationManuallyPaid,
   rejectApplication,
+  resendPaymentEmail,
   saveApplicationNotes,
 } from "@/app/admin/applications/actions";
 import { getAdminAccess } from "@/lib/auth/profile";
@@ -48,6 +51,17 @@ function renderValue(value: string | boolean | null) {
   return value || "Not set";
 }
 
+function dollarsFromCents(value: number | null) {
+  if (value === null) {
+    return "Not set";
+  }
+
+  return new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency: "AUD",
+  }).format(value / 100);
+}
+
 export default async function AdminApplicationDetailPage({
   params,
   searchParams,
@@ -70,6 +84,29 @@ export default async function AdminApplicationDetailPage({
   if (!application) {
     notFound();
   }
+
+  const { data: profileByApplication } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("linked_application_id", application.id)
+    .maybeSingle();
+  const { data: profileByEmail } = profileByApplication
+    ? { data: null }
+    : await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", application.email)
+        .maybeSingle();
+  const linkedProfile = profileByApplication ?? profileByEmail;
+  const { data: latestPayment } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("application_id", application.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const canTakePaymentAction =
+    application.status === "approved" && application.payment_status !== "paid";
 
   const detailSections: DetailSection[] = [
     {
@@ -157,8 +194,33 @@ export default async function AdminApplicationDetailPage({
       title: "Review History",
       rows: [
         ["Status", application.status],
+        ["Payment status", application.payment_status],
+        ["Member number", application.member_number],
         ["Reviewed", formatDateTime(application.reviewed_at)],
         ["Reviewed by profile ID", application.reviewed_by],
+      ],
+    },
+    {
+      title: "Member Details",
+      rows: [
+        ["Member number", linkedProfile?.member_number ?? application.member_number],
+        ["Member status", linkedProfile?.membership_status ?? null],
+        ["Payment status", linkedProfile?.payment_status ?? null],
+        ["Membership started", formatDateTime(linkedProfile?.membership_started_at ?? null)],
+        ["Membership expires", formatDateTime(linkedProfile?.membership_expires_at ?? null)],
+        ["Profile ID", linkedProfile?.id ?? null],
+      ],
+    },
+    {
+      title: "Payment Details",
+      rows: [
+        ["Payment status", application.payment_status],
+        ["Checkout session", application.stripe_checkout_session_id],
+        ["Latest payment status", latestPayment?.status ?? null],
+        ["Latest payment amount", latestPayment ? dollarsFromCents(latestPayment.amount) : null],
+        ["Latest paid at", formatDateTime(latestPayment?.paid_at ?? null)],
+        ["Stripe customer", latestPayment?.stripe_customer_id ?? linkedProfile?.stripe_customer_id ?? null],
+        ["Stripe subscription", latestPayment?.stripe_subscription_id ?? linkedProfile?.stripe_subscription_id ?? null],
       ],
     },
   ];
@@ -231,8 +293,9 @@ export default async function AdminApplicationDetailPage({
             Review actions
           </h2>
           <p className="mt-3 text-sm leading-6 text-forest-900/70">
-            Approval creates or updates a profile with membership status
-            approved. Payment remains a future Stripe step.
+            Approval creates or updates a member profile, assigns a member
+            number, creates a Stripe checkout link when configured, and sends
+            the payment email.
           </p>
 
           <form className="mt-6 grid gap-4">
@@ -255,21 +318,87 @@ export default async function AdminApplicationDetailPage({
               >
                 Save Notes
               </button>
-              <button
-                formAction={approveApplication}
-                className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
-              >
-                Approve Application
-              </button>
-              <ConfirmSubmitButton
-                formAction={rejectApplication}
-                message="Reject this application?"
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800 transition hover:bg-red-100"
-              >
-                Reject Application
-              </ConfirmSubmitButton>
+              {application.status === "pending" ? (
+                <>
+                  <button
+                    formAction={approveApplication}
+                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+                  >
+                    Approve Application
+                  </button>
+                  <ConfirmSubmitButton
+                    formAction={rejectApplication}
+                    message="Reject this application?"
+                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800 transition hover:bg-red-100"
+                  >
+                    Reject Application
+                  </ConfirmSubmitButton>
+                </>
+              ) : null}
+              {canTakePaymentAction ? (
+                <>
+                  <button
+                    formAction={resendPaymentEmail}
+                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-clay px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+                  >
+                    Resend Payment Email
+                  </button>
+                  <ConfirmSubmitButton
+                    formAction={markApplicationManuallyPaid}
+                    message="Mark this membership payment as paid manually?"
+                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
+                  >
+                    Mark Payment Manually Paid
+                  </ConfirmSubmitButton>
+                </>
+              ) : null}
+              {linkedProfile ? (
+                <Link
+                  href={`/admin/members/${linkedProfile.id}`}
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
+                >
+                  View Member
+                </Link>
+              ) : null}
             </div>
           </form>
+
+          <div className="mt-6 border-t border-forest-900/10 pt-5">
+            <h3 className="text-sm font-semibold uppercase text-clay">
+              Payment Status
+            </h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <StatusBadge status={application.payment_status} />
+              {linkedProfile?.membership_status ? (
+                <StatusBadge status={linkedProfile.membership_status} />
+              ) : null}
+            </div>
+            {application.stripe_payment_link ? (
+              <div className="mt-4 grid gap-3">
+                <input
+                  readOnly
+                  value={application.stripe_payment_link}
+                  className="min-h-11 w-full rounded-md border border-forest-900/20 bg-forest-50 px-3 py-2 text-sm text-forest-900/75"
+                />
+                <div className="flex flex-wrap gap-3">
+                  <CopyLinkButton value={application.stripe_payment_link} />
+                  <a
+                    href={application.stripe_payment_link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex min-h-10 items-center justify-center rounded-md border border-forest-900/20 px-4 py-2 text-sm font-semibold text-clay transition hover:bg-forest-50"
+                  >
+                    Open payment link
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm leading-6 text-forest-900/70">
+                No Stripe payment link is stored yet. Configure Stripe or use
+                manual paid fallback after receiving payment another way.
+              </p>
+            )}
+          </div>
         </section>
       </div>
     </div>

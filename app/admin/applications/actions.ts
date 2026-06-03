@@ -6,7 +6,13 @@ import { getAdminAccess } from "@/lib/auth/profile";
 import {
   sendApplicationApprovedEmail,
   sendApplicationRejectedEmail,
+  sendPaymentLinkResentEmail,
 } from "@/lib/email/application-emails";
+import {
+  activateMembershipPayment,
+  createApprovalCheckout,
+  generateMemberNumber,
+} from "@/lib/membership/workflow";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import type { ApplicationStatus } from "@/types/database";
 
@@ -75,39 +81,76 @@ export async function approveApplication(formData: FormData) {
 
   const { data: existingProfile } = await supabase
     .from("profiles")
-    .select("membership_status")
+    .select("*")
     .eq("email", application.email)
     .maybeSingle();
+  const memberNumber =
+    existingProfile?.member_number ?? (await generateMemberNumber(supabase));
 
-  const membershipStatus =
-    existingProfile?.membership_status === "active" ? "active" : "approved";
+  const profileWrite = existingProfile
+    ? await supabase
+        .from("profiles")
+        .update({
+          full_name: application.full_name,
+          linked_application_id: application.id,
+          member_number: memberNumber,
+          membership_status: "approved",
+          payment_status: "pending_payment",
+          phone: application.phone_number ?? application.phone,
+        })
+        .eq("id", existingProfile.id)
+        .select("*")
+        .single()
+    : await supabase
+        .from("profiles")
+        .insert({
+          email: application.email,
+          full_name: application.full_name,
+          linked_application_id: application.id,
+          member_number: memberNumber,
+          membership_status: "approved",
+          payment_status: "pending_payment",
+          phone: application.phone_number ?? application.phone,
+        })
+        .select("*")
+        .single();
 
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        email: application.email,
-        full_name: application.full_name,
-        phone: application.phone_number ?? application.phone,
-        membership_status: membershipStatus,
-        linked_application_id: application.id,
-      },
-      { onConflict: "email" },
-    )
-    .select("id")
-    .single();
-
-  if (profileError) {
+  if (profileWrite.error || !profileWrite.data) {
     redirect(`/admin/applications/${id}?error=profile`);
+  }
+
+  const profile = profileWrite.data;
+  const checkout = await createApprovalCheckout({
+    application,
+    memberNumber,
+    profile,
+  });
+
+  if (checkout?.id) {
+    await supabase.from("payments").upsert(
+      {
+        application_id: application.id,
+        member_number: memberNumber,
+        payment_type: "membership",
+        profile_id: profile.id,
+        status: "pending_payment",
+        stripe_checkout_session_id: checkout.id,
+      },
+      { onConflict: "stripe_checkout_session_id" },
+    );
   }
 
   const { error: updateError } = await supabase
     .from("applications")
     .update({
-      status: "approved",
       admin_notes: notes,
+      member_number: memberNumber,
+      payment_status: "pending_payment",
       reviewed_at: new Date().toISOString(),
       reviewed_by: adminProfile.id || null,
+      status: "approved",
+      stripe_checkout_session_id: checkout?.id ?? null,
+      stripe_payment_link: checkout?.url ?? null,
     })
     .eq("id", id);
 
@@ -121,12 +164,142 @@ export async function approveApplication(formData: FormData) {
 
   await sendApplicationApprovedEmail({
     applicationId: application.id,
-    fullName: application.full_name,
     email: application.email,
+    fullName: application.full_name,
+    memberNumber,
+    paymentLink: checkout?.url ?? null,
     profileId: profile.id,
   });
 
   redirect(`/admin/applications/${id}?saved=approved`);
+}
+
+async function getApprovedPaymentContext(formData: FormData) {
+  const { id, supabase } = await getApplicationActionContext(formData);
+  const { data: application } = await supabase
+    .from("applications")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (!application) {
+    redirect(`/admin/applications/${id}?error=not-found`);
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("linked_application_id", application.id)
+    .maybeSingle();
+  const resolvedProfile =
+    profile ??
+    (
+      await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", application.email)
+        .maybeSingle()
+    ).data;
+
+  if (!resolvedProfile) {
+    redirect(`/admin/applications/${id}?error=profile`);
+  }
+
+  return {
+    application,
+    profile: resolvedProfile,
+    supabase,
+  };
+}
+
+export async function resendPaymentEmail(formData: FormData) {
+  const { application, profile, supabase } =
+    await getApprovedPaymentContext(formData);
+  const memberNumber =
+    profile.member_number ??
+    application.member_number ??
+    (await generateMemberNumber(supabase));
+  let paymentLink = application.stripe_payment_link;
+  let checkoutSessionId = application.stripe_checkout_session_id;
+
+  if (!paymentLink) {
+    const checkout = await createApprovalCheckout({
+      application,
+      memberNumber,
+      profile,
+    });
+
+    paymentLink = checkout?.url ?? null;
+    checkoutSessionId = checkout?.id ?? null;
+
+    await supabase
+      .from("applications")
+      .update({
+        member_number: memberNumber,
+        payment_status: "pending_payment",
+        stripe_checkout_session_id: checkoutSessionId,
+        stripe_payment_link: paymentLink,
+      })
+      .eq("id", application.id);
+
+    if (checkoutSessionId) {
+      await supabase.from("payments").upsert(
+        {
+          application_id: application.id,
+          member_number: memberNumber,
+          payment_type: "membership",
+          profile_id: profile.id,
+          status: "pending_payment",
+          stripe_checkout_session_id: checkoutSessionId,
+        },
+        { onConflict: "stripe_checkout_session_id" },
+      );
+    }
+  }
+
+  await supabase
+    .from("profiles")
+    .update({
+      member_number: memberNumber,
+      membership_status: "approved",
+      payment_status: "pending_payment",
+    })
+    .eq("id", profile.id);
+
+  await sendPaymentLinkResentEmail({
+    applicationId: application.id,
+    email: application.email,
+    fullName: application.full_name,
+    memberNumber,
+    paymentLink,
+    profileId: profile.id,
+  });
+
+  revalidatePath("/admin/applications");
+  revalidatePath(`/admin/applications/${application.id}`);
+  revalidatePath("/admin/members");
+  revalidatePath(`/admin/members/${profile.id}`);
+
+  redirect(`/admin/applications/${application.id}?saved=payment-email`);
+}
+
+export async function markApplicationManuallyPaid(formData: FormData) {
+  const { application, profile, supabase } =
+    await getApprovedPaymentContext(formData);
+
+  await activateMembershipPayment(supabase, {
+    application,
+    manual: true,
+    profile,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/applications");
+  revalidatePath(`/admin/applications/${application.id}`);
+  revalidatePath("/admin/members");
+  revalidatePath(`/admin/members/${profile.id}`);
+
+  redirect(`/admin/applications/${application.id}?saved=manual-paid`);
 }
 
 export async function rejectApplication(formData: FormData) {

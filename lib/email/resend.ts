@@ -10,6 +10,10 @@ type SendEmailInput = {
   subject: string;
   text: string;
   emailType: EmailType;
+  attachments?: Array<{
+    content: string;
+    filename: string;
+  }>;
   relatedApplicationId?: string | null;
   relatedProfileId?: string | null;
 };
@@ -70,6 +74,7 @@ export async function sendEmail(input: SendEmailInput) {
         to,
         subject: input.subject,
         text: input.text,
+        attachments: input.attachments?.length ? input.attachments : undefined,
       }),
     });
 

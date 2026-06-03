@@ -5,12 +5,15 @@
 
 create extension if not exists pgcrypto;
 
+create sequence if not exists public.pros_member_number_seq start 1;
+
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
   auth_user_id uuid references auth.users(id) on delete set null,
   email text unique not null,
   full_name text,
   phone text,
+  member_number text unique,
   role text not null default 'member' check (role in ('admin', 'member')),
   membership_status text not null default 'pending' check (
     membership_status in (
@@ -22,7 +25,18 @@ create table if not exists public.profiles (
       'rejected'
     )
   ),
+  payment_status text not null default 'not_required' check (
+    payment_status in (
+      'not_required',
+      'pending_payment',
+      'paid',
+      'failed',
+      'refunded',
+      'cancelled'
+    )
+  ),
   stripe_customer_id text,
+  stripe_subscription_id text,
   membership_started_at timestamptz,
   membership_expires_at timestamptz,
   notes text,
@@ -70,6 +84,19 @@ create table if not exists public.applications (
   status text not null default 'pending' check (
     status in ('pending', 'approved', 'active', 'expired', 'cancelled', 'rejected')
   ),
+  member_number text,
+  payment_status text not null default 'not_required' check (
+    payment_status in (
+      'not_required',
+      'pending_payment',
+      'paid',
+      'failed',
+      'refunded',
+      'cancelled'
+    )
+  ),
+  stripe_checkout_session_id text,
+  stripe_payment_link text,
   admin_notes text,
   reviewed_at timestamptz,
   reviewed_by uuid references public.profiles(id) on delete set null,
@@ -80,10 +107,34 @@ create table if not exists public.applications (
 alter table public.profiles
   add column if not exists linked_application_id uuid references public.applications(id) on delete set null;
 
+create or replace function public.generate_member_number()
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  next_value bigint;
+  next_member_number text;
+begin
+  loop
+    next_value := nextval('public.pros_member_number_seq');
+    next_member_number := 'PROS-' || lpad(next_value::text, 3, '0');
+
+    exit when not exists (
+      select 1 from public.profiles where member_number = next_member_number
+    );
+  end loop;
+
+  return next_member_number;
+end;
+$$;
+
 create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
   profile_id uuid references public.profiles(id) on delete set null,
   application_id uuid references public.applications(id) on delete set null,
+  member_number text,
   stripe_customer_id text,
   stripe_checkout_session_id text unique,
   stripe_subscription_id text,
@@ -159,7 +210,37 @@ alter table public.applications
   add column if not exists accept_privacy_consent boolean not null default false,
   add column if not exists applicant_signature text,
   add column if not exists application_date date,
+  add column if not exists member_number text,
+  add column if not exists payment_status text not null default 'not_required' check (
+    payment_status in (
+      'not_required',
+      'pending_payment',
+      'paid',
+      'failed',
+      'refunded',
+      'cancelled'
+    )
+  ),
+  add column if not exists stripe_checkout_session_id text,
+  add column if not exists stripe_payment_link text,
   add column if not exists reviewed_by uuid references public.profiles(id) on delete set null;
+
+alter table public.profiles
+  add column if not exists member_number text,
+  add column if not exists payment_status text not null default 'not_required' check (
+    payment_status in (
+      'not_required',
+      'pending_payment',
+      'paid',
+      'failed',
+      'refunded',
+      'cancelled'
+    )
+  ),
+  add column if not exists stripe_subscription_id text;
+
+alter table public.payments
+  add column if not exists member_number text;
 
 alter table public.email_logs
   add column if not exists recipient_email text,
@@ -203,10 +284,19 @@ $$;
 create index if not exists profiles_auth_user_id_idx on public.profiles(auth_user_id);
 create index if not exists profiles_email_idx on public.profiles(email);
 create index if not exists profiles_linked_application_id_idx on public.profiles(linked_application_id);
+create unique index if not exists profiles_member_number_idx
+  on public.profiles(member_number)
+  where member_number is not null;
+create index if not exists profiles_payment_status_idx on public.profiles(payment_status);
 create index if not exists applications_status_created_at_idx on public.applications(status, created_at desc);
+create index if not exists applications_member_number_idx on public.applications(member_number);
+create index if not exists applications_payment_status_idx on public.applications(payment_status);
+create index if not exists applications_stripe_checkout_session_id_idx
+  on public.applications(stripe_checkout_session_id);
 create index if not exists applications_reviewed_by_idx on public.applications(reviewed_by);
 create index if not exists payments_profile_id_idx on public.payments(profile_id);
 create index if not exists payments_application_id_idx on public.payments(application_id);
+create index if not exists payments_member_number_idx on public.payments(member_number);
 create index if not exists posts_status_visibility_published_at_idx on public.posts(status, visibility, published_at desc);
 create index if not exists email_logs_related_application_id_idx on public.email_logs(related_application_id);
 create index if not exists email_logs_related_profile_id_idx on public.email_logs(related_profile_id);

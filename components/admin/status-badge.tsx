@@ -1,7 +1,12 @@
 const statusClassName: Record<string, string> = {
   pending: "bg-yellow-50 text-yellow-900 border-yellow-200",
+  pending_payment: "bg-yellow-50 text-yellow-900 border-yellow-200",
   approved: "bg-blue-50 text-blue-900 border-blue-200",
   active: "bg-forest-50 text-forest-900 border-forest-700/20",
+  paid: "bg-forest-50 text-forest-900 border-forest-700/20",
+  not_required: "bg-stone text-forest-900 border-forest-900/20",
+  failed: "bg-red-50 text-red-900 border-red-200",
+  refunded: "bg-blue-50 text-blue-900 border-blue-200",
   expired: "bg-stone text-forest-900 border-forest-900/20",
   cancelled: "bg-stone text-forest-900 border-forest-900/20",
   rejected: "bg-red-50 text-red-900 border-red-200",

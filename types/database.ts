@@ -21,8 +21,19 @@ export type EmailType =
   | "application_received"
   | "admin_new_application"
   | "application_approved"
+  | "application_approved_payment_required"
+  | "payment_confirmed_welcome"
   | "application_rejected"
+  | "payment_link_resent"
   | "member_update";
+
+export type PaymentStatus =
+  | "not_required"
+  | "pending_payment"
+  | "paid"
+  | "failed"
+  | "refunded"
+  | "cancelled";
 
 export type Database = {
   public: {
@@ -66,6 +77,10 @@ export type Database = {
           applicant_signature: string | null;
           application_date: string | null;
           status: ApplicationStatus;
+          payment_status: PaymentStatus;
+          member_number: string | null;
+          stripe_checkout_session_id: string | null;
+          stripe_payment_link: string | null;
           admin_notes: string | null;
           reviewed_at: string | null;
           reviewed_by: string | null;
@@ -110,6 +125,10 @@ export type Database = {
           applicant_signature?: string | null;
           application_date?: string | null;
           status?: ApplicationStatus;
+          payment_status?: PaymentStatus;
+          member_number?: string | null;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_link?: string | null;
           admin_notes?: string | null;
           reviewed_at?: string | null;
           reviewed_by?: string | null;
@@ -160,6 +179,7 @@ export type Database = {
           id: string;
           profile_id: string | null;
           application_id: string | null;
+          member_number: string | null;
           stripe_customer_id: string | null;
           stripe_checkout_session_id: string | null;
           stripe_subscription_id: string | null;
@@ -174,6 +194,7 @@ export type Database = {
           id?: string;
           profile_id?: string | null;
           application_id?: string | null;
+          member_number?: string | null;
           stripe_customer_id?: string | null;
           stripe_checkout_session_id?: string | null;
           stripe_subscription_id?: string | null;
@@ -250,9 +271,12 @@ export type Database = {
           email: string;
           full_name: string | null;
           phone: string | null;
+          member_number: string | null;
           role: ProfileRole;
           membership_status: ApplicationStatus;
+          payment_status: PaymentStatus;
           stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
           membership_started_at: string | null;
           membership_expires_at: string | null;
           linked_application_id: string | null;
@@ -266,9 +290,12 @@ export type Database = {
           email: string;
           full_name?: string | null;
           phone?: string | null;
+          member_number?: string | null;
           role?: ProfileRole;
           membership_status?: ApplicationStatus;
+          payment_status?: PaymentStatus;
           stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
           membership_started_at?: string | null;
           membership_expires_at?: string | null;
           linked_application_id?: string | null;
@@ -281,7 +308,12 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      generate_member_number: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

@@ -149,7 +149,7 @@ export async function submitApplication(
       application_date: application.application_date,
       status: "pending",
     })
-    .select("id")
+    .select("*")
     .single();
 
   if (error) {
@@ -164,6 +164,7 @@ export async function submitApplication(
 
   await Promise.all([
     sendApplicationReceivedEmail({
+      application: savedApplication,
       applicationId: savedApplication.id,
       fullName: application.full_name,
       email: application.email,
