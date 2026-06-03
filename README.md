@@ -227,6 +227,8 @@ Public pages:
 /about
 /membership
 /apply
+/sponsors
+/sponsorship
 /news
 /shop
 /contact
@@ -272,6 +274,9 @@ http://localhost:3000/admin/applications
 
 Members:
 http://localhost:3000/admin/members
+
+Sponsors:
+http://localhost:3000/admin/sponsors
 ```
 
 ### How to review applications
@@ -306,6 +311,45 @@ http://localhost:3000/admin/members
 
 Admin and application dates are displayed in `Australia/Melbourne` time.
 
+## Sponsorship Workflow
+
+### Public URLs
+
+```txt
+Sponsors:
+http://localhost:3000/sponsors
+
+Become a sponsor:
+http://localhost:3000/sponsorship
+```
+
+The home page shows featured sponsors when any active sponsor is marked
+`Featured on home`. If no featured sponsors exist, it shows the three sponsor
+tiers instead.
+
+### How to manage sponsors
+
+1. Log in as admin.
+2. Open `/admin/sponsors`.
+3. Create a sponsor with name, tier, summary, profile description, website URL, logo URL, and contact details.
+4. Keep `Active` checked when the sponsor should appear publicly.
+5. Check `Featured on home` when the sponsor should appear on the home page sponsor section.
+6. Save changes.
+7. Use `Delete Sponsor` only for mistaken or duplicate sponsor records.
+
+### Sponsor tiers
+
+The first three tiers are:
+
+- Community Sponsor: `$500`
+- Supporting Sponsor: `$1,000`
+- Foundation Sponsor: contact-only VIP/principal partner tier
+
+Edit these tier names, prices, descriptions, and benefits from
+`/admin/sponsors`. Run the latest `supabase/manual_setup.sql` in Supabase before
+using this section in production so the `sponsorship_tiers` and `sponsors`
+tables exist.
+
 ### Email setup
 
 Application emails use Resend when these variables are configured:
@@ -334,7 +378,7 @@ log records `skipped` or `failed`.
 
 Implemented in this first framework:
 
-- Public pages: home, about, membership, apply, news, shop, contact, privacy, terms
+- Public pages: home, about, membership, apply, sponsors, sponsorship, news, shop, contact, privacy, terms
 - Responsive public layout
 - Supabase schema migration with RLS policies
 - Supabase browser/server/service helpers
@@ -344,6 +388,7 @@ Implemented in this first framework:
 - Application approval with member number generation, payment email, Stripe Checkout link, manual paid fallback, and active-member conversion
 - Member list, filters, search, detail view, payment status updates, notes, and linked application view
 - Stripe membership webhook for Checkout completion, invoice success/failure, and subscription cancellation
+- Sponsor pages, sponsor detail pages, sponsorship tier page, home page sponsor section, and sponsor admin management
 - Placeholder posts, products, emails, settings admin pages
 - Placeholder shop Stripe route and post-update email route
 

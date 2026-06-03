@@ -1,10 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
+import { SponsorCard } from "@/components/sponsors/sponsor-card";
 import { LinkButton } from "@/components/ui/link-button";
 import { membershipSteps } from "@/lib/site-content";
+import { getSponsors, getSponsorshipTiers } from "@/lib/sponsors";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [featuredSponsors, sponsorshipTiers] = await Promise.all([
+    getSponsors({ featuredOnly: true }),
+    getSponsorshipTiers(),
+  ]);
+
   return (
     <SiteShell>
       <main>
@@ -99,6 +106,68 @@ export default function HomePage() {
                 </p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="bg-stone px-5 py-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+              <div>
+                <p className="text-sm font-semibold uppercase text-clay">
+                  Partnerships
+                </p>
+                <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-forest-900">
+                  Our sponsors support society activities and member
+                  experiences.
+                </h2>
+                <p className="mt-4 max-w-3xl text-base leading-7 text-forest-900/72">
+                  PROS welcomes sponsors whose values align with responsible
+                  outdoor recreation, safety, conservation and community
+                  standards.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/sponsors"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-white"
+                >
+                  View Sponsors
+                </Link>
+                <Link
+                  href="/sponsorship"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+                >
+                  Become a Sponsor
+                </Link>
+              </div>
+            </div>
+
+            {featuredSponsors.length ? (
+              <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {featuredSponsors.map((sponsor) => (
+                  <SponsorCard key={sponsor.id} sponsor={sponsor} />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-8 grid gap-4 md:grid-cols-3">
+                {sponsorshipTiers.map((tier) => (
+                  <article
+                    key={tier.id}
+                    className="rounded-md border border-forest-900/10 bg-white p-5 shadow-sm"
+                  >
+                    <p className="text-sm font-semibold text-clay">
+                      {tier.price_label}
+                    </p>
+                    <h3 className="mt-2 text-lg font-semibold text-forest-900">
+                      {tier.name}
+                    </h3>
+                    <p className="mt-3 text-sm leading-6 text-forest-900/70">
+                      {tier.description}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

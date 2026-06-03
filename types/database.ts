@@ -264,6 +264,80 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
         Relationships: [];
       };
+      sponsors: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          tier_id: string | null;
+          summary: string | null;
+          description: string | null;
+          website_url: string | null;
+          logo_url: string | null;
+          contact_name: string | null;
+          contact_email: string | null;
+          contact_phone: string | null;
+          active: boolean;
+          featured: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          tier_id?: string | null;
+          summary?: string | null;
+          description?: string | null;
+          website_url?: string | null;
+          logo_url?: string | null;
+          contact_name?: string | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          active?: boolean;
+          featured?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["sponsors"]["Insert"]>;
+        Relationships: [];
+      };
+      sponsorship_tiers: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          price_label: string;
+          amount: number | null;
+          description: string | null;
+          benefits: string | null;
+          contact_required: boolean;
+          active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          price_label: string;
+          amount?: number | null;
+          description?: string | null;
+          benefits?: string | null;
+          contact_required?: boolean;
+          active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["sponsorship_tiers"]["Insert"]
+        >;
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;

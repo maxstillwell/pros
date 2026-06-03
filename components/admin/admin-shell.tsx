@@ -7,6 +7,7 @@ const adminNav = [
   { href: "/admin/payments", label: "Payments" },
   { href: "/admin/posts", label: "Posts" },
   { href: "/admin/products", label: "Products" },
+  { href: "/admin/sponsors", label: "Sponsors" },
   { href: "/admin/emails", label: "Emails" },
   { href: "/admin/settings", label: "Settings" },
   { href: "/logout", label: "Logout" },
