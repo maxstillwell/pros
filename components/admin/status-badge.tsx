@@ -10,6 +10,10 @@ const statusClassName: Record<string, string> = {
   expired: "bg-stone text-forest-900 border-forest-900/20",
   cancelled: "bg-stone text-forest-900 border-forest-900/20",
   rejected: "bg-red-50 text-red-900 border-red-200",
+  new: "bg-yellow-50 text-yellow-900 border-yellow-200",
+  in_progress: "bg-blue-50 text-blue-900 border-blue-200",
+  resolved: "bg-forest-50 text-forest-900 border-forest-700/20",
+  archived: "bg-stone text-forest-900 border-forest-900/20",
   draft: "bg-stone text-forest-900 border-forest-900/20",
   published: "bg-forest-50 text-forest-900 border-forest-700/20",
 };

@@ -48,7 +48,10 @@ export function SponsorCard({ sponsor }: SponsorCardProps) {
       )}
 
       <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-        <Link href={`/sponsors/${sponsor.slug}`} className="text-clay hover:text-forest-900">
+        <Link
+          href={`/sponsorship/${sponsor.slug}`}
+          className="text-clay hover:text-forest-900"
+        >
           View sponsor
         </Link>
         {sponsor.website_url ? (

@@ -35,3 +35,21 @@ textarea,
 select {
   font: inherit;
 }
+
+@keyframes sponsor-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.sponsor-marquee-track {
+  animation: sponsor-marquee 28s linear infinite;
+}
+
+.sponsor-marquee-track:hover {
+  animation-play-state: paused;
+}

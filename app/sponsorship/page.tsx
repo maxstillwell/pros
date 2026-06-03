@@ -1,101 +1,83 @@
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
-import { benefitsList, getSponsorshipTiers } from "@/lib/sponsors";
-
-const sponsorEmail =
-  "mailto:info@pros.org.au?subject=PROS%20sponsorship%20enquiry";
+import { SponsorCard } from "@/components/sponsors/sponsor-card";
+import { SponsorLogoMarquee } from "@/components/sponsors/sponsor-logo-marquee";
+import { getSponsors } from "@/lib/sponsors";
 
 export default async function SponsorshipPage() {
-  const tiers = await getSponsorshipTiers();
+  const sponsors = await getSponsors();
 
   return (
     <SiteShell>
       <main className="px-5 py-16">
         <div className="mx-auto max-w-6xl">
           <p className="text-sm font-semibold uppercase text-clay">
-            Become a sponsor
+            Sponsorship
           </p>
           <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-forest-900">
-            Partner with a responsible, members-only outdoor society.
+            Our sponsor platform.
           </h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-forest-900/74">
-            PROS welcomes considered sponsorship from organisations whose values
-            align with safety, lawful outdoor recreation, conservation,
-            fellowship and practical member development.
+            PROS showcases sponsors whose values align with responsible outdoor
+            recreation, member development, safety, conservation and practical
+            community standards.
           </p>
 
-          <section className="mt-12 grid gap-5 lg:grid-cols-3">
-            {tiers.map((tier) => (
-              <article
-                key={tier.id}
-                className="flex h-full flex-col rounded-md border border-forest-900/10 bg-white p-6 shadow-sm"
-              >
-                <p className="text-sm font-semibold uppercase text-clay">
-                  {tier.name}
-                </p>
-                <p className="mt-3 text-3xl font-semibold text-forest-900">
-                  {tier.price_label}
-                </p>
-                <p className="mt-4 flex-1 text-sm leading-6 text-forest-900/72">
-                  {tier.description}
-                </p>
-                <ul className="mt-5 grid gap-3 text-sm leading-6 text-forest-900/76">
-                  {benefitsList(tier.benefits).map((benefit) => (
-                    <li key={benefit} className="border-t border-forest-900/10 pt-3">
-                      {benefit}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href={sponsorEmail}
-                  className={`mt-6 inline-flex min-h-11 items-center justify-center rounded-md px-5 py-3 text-sm font-semibold transition ${
-                    tier.contact_required
-                      ? "bg-clay text-white hover:bg-forest-900"
-                      : "bg-forest-700 text-white hover:bg-forest-900"
-                  }`}
-                >
-                  {tier.contact_required ? "Contact Committee" : "Enquire Now"}
-                </a>
-              </article>
-            ))}
-          </section>
-
-          <section className="mt-14 grid gap-8 rounded-md border border-forest-900/10 bg-forest-50 p-6 md:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <p className="text-sm font-semibold uppercase text-clay">
-                Recognition
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-forest-900">
-                Tasteful exposure, practical support.
-              </h2>
-            </div>
-            <div className="text-base leading-8 text-forest-900/76">
-              <p>
-                Sponsor recognition can include website placement, links to a
-                sponsor profile, selected member communication and suitable
-                acknowledgement around society activities.
-              </p>
-              <p className="mt-4">
-                All sponsorship is reviewed by the committee before public
-                listing so PROS standards and sponsor fit stay clear.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="/sponsors"
-                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-white"
-                >
-                  View Sponsors
-                </Link>
-                <a
-                  href={sponsorEmail}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
-                >
-                  Email PROS
-                </a>
-              </div>
-            </div>
-          </section>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/sponsorship/become"
+              className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+            >
+              Become a Sponsor
+            </Link>
+            <Link
+              href="/contact?topic=sponsorship"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
+            >
+              Contact Us
+            </Link>
+          </div>
         </div>
+
+        <div className="-mx-5 mt-12">
+          <SponsorLogoMarquee sponsors={sponsors} />
+        </div>
+
+        <section className="mx-auto mt-14 max-w-6xl">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <h2 className="text-2xl font-semibold text-forest-900">
+                Current sponsors
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-forest-900/68">
+                Each sponsor can link through to a profile with introduction
+                and contact details.
+              </p>
+            </div>
+          </div>
+
+          {sponsors.length ? (
+            <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {sponsors.map((sponsor) => (
+                <SponsorCard key={sponsor.id} sponsor={sponsor} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
+              <p className="text-base leading-7 text-forest-900/72">
+                No sponsors have been added yet. Sponsor opportunities are
+                available for organisations aligned with responsible outdoor
+                recreation, safety, conservation and community standards.
+              </p>
+              <Link
+                href="/sponsorship/become"
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+              >
+                Become a Sponsor
+              </Link>
+            </div>
+          )}
+        </section>
       </main>
     </SiteShell>
   );

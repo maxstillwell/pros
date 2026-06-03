@@ -227,8 +227,8 @@ Public pages:
 /about
 /membership
 /apply
-/sponsors
 /sponsorship
+/sponsorship/become
 /news
 /shop
 /contact
@@ -277,6 +277,9 @@ http://localhost:3000/admin/members
 
 Sponsors:
 http://localhost:3000/admin/sponsors
+
+Contact tickets:
+http://localhost:3000/admin/contact
 ```
 
 ### How to review applications
@@ -316,16 +319,18 @@ Admin and application dates are displayed in `Australia/Melbourne` time.
 ### Public URLs
 
 ```txt
-Sponsors:
-http://localhost:3000/sponsors
+Sponsor showcase:
+http://localhost:3000/sponsorship
 
 Become a sponsor:
-http://localhost:3000/sponsorship
+http://localhost:3000/sponsorship/become
 ```
 
-The home page shows featured sponsors when any active sponsor is marked
-`Featured on home`. If no featured sponsors exist, it shows the three sponsor
-tiers instead.
+The home page shows a left-moving sponsor logo strip. It uses active sponsors
+marked `Featured on home`; if no sponsors are configured yet, it displays
+placeholder sponsor slots. The `/sponsorship` page is the public sponsor
+showcase with sponsor introductions. The `/sponsorship/become` page explains the
+sponsor tiers and sends enquiries to the contact form.
 
 ### How to manage sponsors
 
@@ -333,7 +338,7 @@ tiers instead.
 2. Open `/admin/sponsors`.
 3. Create a sponsor with name, tier, summary, profile description, website URL, logo URL, and contact details.
 4. Keep `Active` checked when the sponsor should appear publicly.
-5. Check `Featured on home` when the sponsor should appear on the home page sponsor section.
+5. Check `Featured on home` when the sponsor logo should appear in the home page marquee.
 6. Save changes.
 7. Use `Delete Sponsor` only for mistaken or duplicate sponsor records.
 
@@ -349,6 +354,25 @@ Edit these tier names, prices, descriptions, and benefits from
 `/admin/sponsors`. Run the latest `supabase/manual_setup.sql` in Supabase before
 using this section in production so the `sponsorship_tiers` and `sponsors`
 tables exist.
+
+## Contact Ticket Workflow
+
+Public enquiries are submitted through `/contact`. Sponsorship enquiry buttons
+link to `/contact?topic=sponsorship`, which preselects the sponsorship topic and
+uses a sponsorship subject.
+
+### How to manage contact tickets
+
+1. Log in as admin.
+2. Open `/admin/contact`.
+3. Filter tickets by `new`, `in progress`, `resolved`, or `archived`.
+4. Search by name, email, phone, topic, or subject.
+5. Reply by email when needed.
+6. Save status changes and admin notes.
+7. Use `Delete Ticket` only for mistaken or duplicate messages.
+
+Run the latest `supabase/manual_setup.sql` in Supabase before using contact
+tickets in production so the `contact_tickets` table exists.
 
 ### Email setup
 
@@ -378,7 +402,7 @@ log records `skipped` or `failed`.
 
 Implemented in this first framework:
 
-- Public pages: home, about, membership, apply, sponsors, sponsorship, news, shop, contact, privacy, terms
+- Public pages: home, about, membership, apply, sponsorship, become a sponsor, news, shop, contact, privacy, terms
 - Responsive public layout
 - Supabase schema migration with RLS policies
 - Supabase browser/server/service helpers
@@ -388,7 +412,8 @@ Implemented in this first framework:
 - Application approval with member number generation, payment email, Stripe Checkout link, manual paid fallback, and active-member conversion
 - Member list, filters, search, detail view, payment status updates, notes, and linked application view
 - Stripe membership webhook for Checkout completion, invoice success/failure, and subscription cancellation
-- Sponsor pages, sponsor detail pages, sponsorship tier page, home page sponsor section, and sponsor admin management
+- Sponsor showcase page, sponsor detail pages, become-a-sponsor tier page, home page sponsor logo marquee, and sponsor admin management
+- Public contact form and admin contact ticket management
 - Placeholder posts, products, emails, settings admin pages
 - Placeholder shop Stripe route and post-update email route
 

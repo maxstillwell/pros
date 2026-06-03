@@ -322,7 +322,7 @@ export default async function AdminSponsorsPage({
             </p>
           </div>
           <Link
-            href="/sponsors"
+            href="/sponsorship"
             className="text-sm font-semibold text-clay hover:text-forest-900"
           >
             View public page
@@ -362,7 +362,7 @@ export default async function AdminSponsorsPage({
                     </p>
                   </div>
                   <Link
-                    href={`/sponsors/${sponsor.slug}`}
+                    href={`/sponsorship/${sponsor.slug}`}
                     className="text-sm font-semibold text-clay hover:text-forest-900"
                   >
                     View profile
@@ -412,10 +412,10 @@ export default async function AdminSponsorsPage({
             </h2>
           </div>
           <Link
-            href="/sponsorship"
+            href="/sponsorship/become"
             className="text-sm font-semibold text-clay hover:text-forest-900"
           >
-            View sponsorship page
+            View sponsor conditions
           </Link>
         </div>
 
@@ -434,8 +434,8 @@ export default async function AdminSponsorsPage({
                 >
                   Save Tier
                 </button>
-                <Link href="/sponsorship" className={secondaryButtonClass}>
-                  Preview Page
+                <Link href="/sponsorship/become" className={secondaryButtonClass}>
+                  Preview Conditions
                 </Link>
               </div>
             </form>

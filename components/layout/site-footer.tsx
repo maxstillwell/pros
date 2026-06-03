@@ -21,12 +21,12 @@ export function SiteFooter() {
           <Link href="/news" className="hover:text-white">
             News
           </Link>
-          <Link href="/sponsors" className="hover:text-white">
-            Sponsors
+          <Link href="/sponsorship" className="hover:text-white">
+            Sponsorship
           </Link>
         </div>
         <div className="flex flex-col gap-2 text-sm text-stone/75">
-          <Link href="/sponsorship" className="hover:text-white">
+          <Link href="/sponsorship/become" className="hover:text-white">
             Become a Sponsor
           </Link>
           <Link href="/privacy" className="hover:text-white">

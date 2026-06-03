@@ -113,10 +113,12 @@ function revalidateSponsorPaths(slug?: string) {
   revalidatePath("/");
   revalidatePath("/sponsors");
   revalidatePath("/sponsorship");
+  revalidatePath("/sponsorship/become");
   revalidatePath("/admin/sponsors");
 
   if (slug) {
     revalidatePath(`/sponsors/${slug}`);
+    revalidatePath(`/sponsorship/${slug}`);
   }
 }
 
@@ -148,6 +150,7 @@ export async function updateSponsor(formData: FormData) {
 
   if (existing?.slug && existing.slug !== payload.slug) {
     revalidatePath(`/sponsors/${existing.slug}`);
+    revalidatePath(`/sponsorship/${existing.slug}`);
   }
 
   if (error) {

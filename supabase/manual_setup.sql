@@ -172,6 +172,21 @@ create table if not exists public.products (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.contact_tickets (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  phone text,
+  topic text not null default 'general',
+  subject text not null,
+  message text not null,
+  status text not null default 'new' check (status in ('new', 'in_progress', 'resolved', 'archived')),
+  admin_notes text,
+  source_path text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.sponsorship_tiers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -387,6 +402,8 @@ create index if not exists payments_profile_id_idx on public.payments(profile_id
 create index if not exists payments_application_id_idx on public.payments(application_id);
 create index if not exists payments_member_number_idx on public.payments(member_number);
 create index if not exists posts_status_visibility_published_at_idx on public.posts(status, visibility, published_at desc);
+create index if not exists contact_tickets_status_created_at_idx
+  on public.contact_tickets(status, created_at desc);
 create index if not exists sponsorship_tiers_active_sort_order_idx
   on public.sponsorship_tiers(active, sort_order);
 create index if not exists sponsors_active_featured_sort_order_idx
@@ -424,6 +441,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists products_set_updated_at on public.products;
 create trigger products_set_updated_at
 before update on public.products
+for each row execute function public.set_updated_at();
+
+drop trigger if exists contact_tickets_set_updated_at on public.contact_tickets;
+create trigger contact_tickets_set_updated_at
+before update on public.contact_tickets
 for each row execute function public.set_updated_at();
 
 drop trigger if exists sponsorship_tiers_set_updated_at on public.sponsorship_tiers;
@@ -471,6 +493,7 @@ alter table public.applications enable row level security;
 alter table public.payments enable row level security;
 alter table public.posts enable row level security;
 alter table public.products enable row level security;
+alter table public.contact_tickets enable row level security;
 alter table public.sponsorship_tiers enable row level security;
 alter table public.sponsors enable row level security;
 alter table public.email_logs enable row level security;
@@ -558,6 +581,22 @@ using (active is true);
 drop policy if exists "Products are manageable by admins" on public.products;
 create policy "Products are manageable by admins"
 on public.products for all
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "Contact tickets can be submitted publicly" on public.contact_tickets;
+create policy "Contact tickets can be submitted publicly"
+on public.contact_tickets for insert
+with check (
+  length(trim(name)) > 0
+  and position('@' in email) > 1
+  and length(trim(subject)) > 0
+  and length(trim(message)) > 0
+);
+
+drop policy if exists "Contact tickets are manageable by admins" on public.contact_tickets;
+create policy "Contact tickets are manageable by admins"
+on public.contact_tickets for all
 using (public.is_admin())
 with check (public.is_admin());
 

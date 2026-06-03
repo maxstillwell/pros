@@ -17,6 +17,11 @@ export type ApplicationStatus =
 export type ProfileRole = "admin" | "member";
 export type PostVisibility = "public" | "members_only";
 export type PostStatus = "draft" | "published";
+export type ContactTicketStatus =
+  | "new"
+  | "in_progress"
+  | "resolved"
+  | "archived";
 export type EmailType =
   | "application_received"
   | "admin_new_application"
@@ -262,6 +267,40 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
+        Relationships: [];
+      };
+      contact_tickets: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          phone: string | null;
+          topic: string;
+          subject: string;
+          message: string;
+          status: ContactTicketStatus;
+          admin_notes: string | null;
+          source_path: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          phone?: string | null;
+          topic?: string;
+          subject: string;
+          message: string;
+          status?: ContactTicketStatus;
+          admin_notes?: string | null;
+          source_path?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["contact_tickets"]["Insert"]
+        >;
         Relationships: [];
       };
       sponsors: {
