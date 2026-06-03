@@ -1,5 +1,4 @@
-"use server";
-
+import { redirect } from "next/navigation";
 import { applicationSchema } from "@/lib/validators/application";
 import {
   sendAdminNewApplicationEmail,
@@ -84,6 +83,8 @@ export async function submitApplication(
   _previousState: ApplicationFormState,
   formData: FormData,
 ): Promise<ApplicationFormState> {
+  "use server";
+
   const rawValues = readApplicationForm(formData);
   const parsed = applicationSchema.safeParse(rawValues);
 
@@ -182,4 +183,16 @@ export async function submitApplication(
     fieldErrors: {},
     values: {},
   };
+}
+
+export async function submitApplicationSimple(formData: FormData) {
+  "use server";
+
+  const result = await submitApplication(initialApplicationFormState, formData);
+
+  if (result.status === "success") {
+    redirect("/apply?submitted=1");
+  }
+
+  redirect("/apply?error=1");
 }

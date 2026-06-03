@@ -1,10 +1,6 @@
-"use client";
-
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
 import {
   initialApplicationFormState,
-  submitApplication,
+  submitApplicationSimple,
   type ApplicationFormState,
 } from "@/app/apply/actions";
 import {
@@ -131,24 +127,24 @@ function Section({ title, children }: SectionProps) {
 }
 
 function SubmitButton() {
-  const { pending } = useFormStatus();
-
   return (
     <button
       type="submit"
-      disabled={pending}
       className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900 disabled:cursor-not-allowed disabled:bg-forest-500"
     >
-      {pending ? "Submitting..." : "Submit Application"}
+      Submit Application
     </button>
   );
 }
 
-export function ApplicationForm() {
-  const [state, formAction] = useActionState(
-    submitApplication,
-    initialApplicationFormState,
-  );
+export function ApplicationForm({
+  error = false,
+  submitted = false,
+}: {
+  error?: boolean;
+  submitted?: boolean;
+}) {
+  const state = initialApplicationFormState;
   const currentState: ApplicationFormState = {
     ...initialApplicationFormState,
     ...state,
@@ -156,7 +152,7 @@ export function ApplicationForm() {
     values: state.values ?? {},
   };
 
-  if (currentState.status === "success") {
+  if (submitted) {
     return (
       <div className="rounded-md border border-forest-700/20 bg-white p-8 shadow-sm">
         <p className="text-sm font-semibold uppercase text-clay">
@@ -166,14 +162,15 @@ export function ApplicationForm() {
           Thank you.
         </h1>
         <p className="mt-4 text-base leading-7 text-forest-900/72">
-          {currentState.message}
+          Thank you. Your membership application has been submitted and will be
+          reviewed by the committee.
         </p>
       </div>
     );
   }
 
   return (
-    <form action={formAction} className="grid gap-6">
+    <form action={submitApplicationSimple} className="grid gap-6">
       <div className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
         <p className="text-sm font-semibold uppercase text-clay">
           Prime Range Outdoor Society Inc.
@@ -188,9 +185,10 @@ export function ApplicationForm() {
         </p>
       </div>
 
-      {currentState.status === "error" ? (
+      {error ? (
         <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
-          {currentState.message}
+          The application could not be submitted. Please check every required
+          field and try again.
         </div>
       ) : null}
 
