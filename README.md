@@ -286,16 +286,21 @@ http://localhost:3000/admin/members
 8. Approved applications receive a generated member number like `PROS-001`.
 9. If Stripe is configured, approval creates a Checkout link and sends the payment email.
 10. If payment is received outside Stripe, use `Mark Payment Manually Paid`.
+11. Use `Download PDF` to download the submitted application PDF.
+12. Use `Delete Application` only for mistaken or duplicate application records.
 
 ### How to manage members
 
 1. Open `/admin/members`.
 2. Search or filter by membership status.
 3. Open the member profile.
-4. Update contact details, notes, status, payment status, membership dates, member number, or Stripe IDs.
-5. Use Mark Active, Mark Expired, or Mark Cancelled for common status changes.
-6. Use Resend Payment Email or Mark Payment Manually Paid when needed.
-7. Save changes.
+4. Use the member number as the admin-facing Profile ID.
+5. Update contact details, email, notes, status, payment status, membership dates, member number, or Stripe IDs.
+6. Use Mark Active, Mark Expired, or Mark Cancelled for common status changes.
+7. Use Resend Payment Email or Mark Payment Manually Paid when needed.
+8. Download the linked application PDF from the member detail page.
+9. Use `Delete Member` only for mistaken or duplicate member records.
+10. Save changes.
 
 ### Date display
 

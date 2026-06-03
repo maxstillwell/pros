@@ -123,10 +123,16 @@ async function getMemberAndApplicationContext(formData: FormData) {
 
 export async function updateMember(formData: FormData) {
   const { id, returnTo, supabase } = await getMemberActionContext(formData);
+  const email = readString(formData, "email");
+
+  if (!email) {
+    redirect(`${returnTo}?error=member-email`);
+  }
 
   const { error } = await supabase
     .from("profiles")
     .update({
+      email,
       full_name: readNullableString(formData, "full_name"),
       member_number: readNullableString(formData, "member_number"),
       phone: readNullableString(formData, "phone"),
@@ -323,4 +329,31 @@ export async function markMemberManuallyPaid(formData: FormData) {
   revalidatePath("/admin/applications");
 
   redirect(`${returnTo}?saved=manual-paid`);
+}
+
+export async function deleteMember(formData: FormData) {
+  const { id, returnTo, supabase } = await getMemberActionContext(formData);
+  const { data: member } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (!member) {
+    redirect(`${returnTo}?error=member-not-found`);
+  }
+
+  await supabase.from("payments").delete().eq("profile_id", id);
+  const { error } = await supabase.from("profiles").delete().eq("id", id);
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/members");
+  revalidatePath("/admin/applications");
+  revalidatePath("/admin/payments");
+
+  if (error) {
+    redirect(`${returnTo}?error=member-delete`);
+  }
+
+  redirect("/admin/members?saved=deleted");
 }

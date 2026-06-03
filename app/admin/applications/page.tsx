@@ -8,6 +8,8 @@ import type { ApplicationStatus } from "@/types/database";
 
 type AdminApplicationsPageProps = {
   searchParams: Promise<{
+    error?: string;
+    saved?: string;
     status?: string;
     q?: string;
   }>;
@@ -79,6 +81,18 @@ export default async function AdminApplicationsPage({
           Membership applications
         </h1>
       </div>
+
+      {params.saved ? (
+        <div className="mt-6 rounded-md border border-forest-700/20 bg-white p-4 text-sm font-medium text-forest-900">
+          Application update saved.
+        </div>
+      ) : null}
+
+      {params.error ? (
+        <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+          Application update failed.
+        </div>
+      ) : null}
 
       <div className="mt-6 rounded-md border border-forest-900/10 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap gap-2">

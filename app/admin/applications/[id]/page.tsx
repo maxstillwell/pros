@@ -6,6 +6,7 @@ import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
   approveApplication,
+  deleteApplication,
   markApplicationManuallyPaid,
   rejectApplication,
   resendPaymentEmail,
@@ -34,6 +35,7 @@ const errorCopy: Record<string, string> = {
   notes: "Notes could not be saved.",
   approve: "The application could not be approved.",
   reject: "The application could not be rejected.",
+  delete: "The application could not be deleted.",
   profile: "The profile record could not be created or updated.",
   "not-authorized": "You are not authorised to update this application.",
   "not-found": "The application could not be found.",
@@ -203,12 +205,13 @@ export default async function AdminApplicationDetailPage({
     {
       title: "Member Details",
       rows: [
+        ["Profile ID", linkedProfile?.member_number ?? application.member_number],
         ["Member number", linkedProfile?.member_number ?? application.member_number],
         ["Member status", linkedProfile?.membership_status ?? null],
         ["Payment status", linkedProfile?.payment_status ?? null],
         ["Membership started", formatDateTime(linkedProfile?.membership_started_at ?? null)],
         ["Membership expires", formatDateTime(linkedProfile?.membership_expires_at ?? null)],
-        ["Profile ID", linkedProfile?.id ?? null],
+        ["Internal profile UUID", linkedProfile?.id ?? null],
       ],
     },
     {
@@ -245,6 +248,12 @@ export default async function AdminApplicationDetailPage({
             Back to Applications
           </Link>
         </div>
+        <a
+          href={`/admin/applications/${application.id}/pdf`}
+          className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 bg-white px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
+        >
+          Download PDF
+        </a>
       </div>
 
       {messages.saved ? (
@@ -288,118 +297,138 @@ export default async function AdminApplicationDetailPage({
           ))}
         </div>
 
-        <section className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-forest-900">
-            Review actions
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-forest-900/70">
-            Approval creates or updates a member profile, assigns a member
-            number, creates a Stripe checkout link when configured, and sends
-            the payment email.
-          </p>
+        <div className="grid gap-6">
+          <section className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-forest-900">
+              Review actions
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-forest-900/70">
+              Approval creates or updates a member profile, assigns a member
+              number, creates a Stripe checkout link when configured, and sends
+              the payment email.
+            </p>
 
-          <form className="mt-6 grid gap-4">
-            <input type="hidden" name="id" value={application.id} />
-            <label className="block">
-              <span className="text-sm font-semibold text-forest-900">
-                Internal notes
-              </span>
-              <textarea
-                name="adminNotes"
-                rows={8}
-                defaultValue={application.admin_notes ?? ""}
-                className="mt-2 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
-              />
-            </label>
-            <div className="grid gap-3">
-              <button
-                formAction={saveApplicationNotes}
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
-              >
-                Save Notes
-              </button>
-              {application.status === "pending" ? (
-                <>
-                  <button
-                    formAction={approveApplication}
-                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
-                  >
-                    Approve Application
-                  </button>
-                  <ConfirmSubmitButton
-                    formAction={rejectApplication}
-                    message="Reject this application?"
-                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800 transition hover:bg-red-100"
-                  >
-                    Reject Application
-                  </ConfirmSubmitButton>
-                </>
-              ) : null}
-              {canTakePaymentAction ? (
-                <>
-                  <button
-                    formAction={resendPaymentEmail}
-                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-clay px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
-                  >
-                    Resend Payment Email
-                  </button>
-                  <ConfirmSubmitButton
-                    formAction={markApplicationManuallyPaid}
-                    message="Mark this membership payment as paid manually?"
-                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
-                  >
-                    Mark Payment Manually Paid
-                  </ConfirmSubmitButton>
-                </>
-              ) : null}
-              {linkedProfile ? (
-                <Link
-                  href={`/admin/members/${linkedProfile.id}`}
+            <form className="mt-6 grid gap-4">
+              <input type="hidden" name="id" value={application.id} />
+              <label className="block">
+                <span className="text-sm font-semibold text-forest-900">
+                  Internal notes
+                </span>
+                <textarea
+                  name="adminNotes"
+                  rows={8}
+                  defaultValue={application.admin_notes ?? ""}
+                  className="mt-2 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+                />
+              </label>
+              <div className="grid gap-3">
+                <button
+                  formAction={saveApplicationNotes}
                   className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
                 >
-                  View Member
-                </Link>
-              ) : null}
-            </div>
-          </form>
-
-          <div className="mt-6 border-t border-forest-900/10 pt-5">
-            <h3 className="text-sm font-semibold uppercase text-clay">
-              Payment Status
-            </h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <StatusBadge status={application.payment_status} />
-              {linkedProfile?.membership_status ? (
-                <StatusBadge status={linkedProfile.membership_status} />
-              ) : null}
-            </div>
-            {application.stripe_payment_link ? (
-              <div className="mt-4 grid gap-3">
-                <input
-                  readOnly
-                  value={application.stripe_payment_link}
-                  className="min-h-11 w-full rounded-md border border-forest-900/20 bg-forest-50 px-3 py-2 text-sm text-forest-900/75"
-                />
-                <div className="flex flex-wrap gap-3">
-                  <CopyLinkButton value={application.stripe_payment_link} />
-                  <a
-                    href={application.stripe_payment_link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex min-h-10 items-center justify-center rounded-md border border-forest-900/20 px-4 py-2 text-sm font-semibold text-clay transition hover:bg-forest-50"
+                  Save Notes
+                </button>
+                {application.status === "pending" ? (
+                  <>
+                    <button
+                      formAction={approveApplication}
+                      className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+                    >
+                      Approve Application
+                    </button>
+                    <ConfirmSubmitButton
+                      formAction={rejectApplication}
+                      message="Reject this application?"
+                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-800 transition hover:bg-red-100"
+                    >
+                      Reject Application
+                    </ConfirmSubmitButton>
+                  </>
+                ) : null}
+                {canTakePaymentAction ? (
+                  <>
+                    <button
+                      formAction={resendPaymentEmail}
+                      className="inline-flex min-h-11 items-center justify-center rounded-md bg-clay px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+                    >
+                      Resend Payment Email
+                    </button>
+                    <ConfirmSubmitButton
+                      formAction={markApplicationManuallyPaid}
+                      message="Mark this membership payment as paid manually?"
+                      className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
+                    >
+                      Mark Payment Manually Paid
+                    </ConfirmSubmitButton>
+                  </>
+                ) : null}
+                {linkedProfile ? (
+                  <Link
+                    href={`/admin/members/${linkedProfile.id}`}
+                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
                   >
-                    Open payment link
-                  </a>
-                </div>
+                    View Member
+                  </Link>
+                ) : null}
               </div>
-            ) : (
-              <p className="mt-4 text-sm leading-6 text-forest-900/70">
-                No Stripe payment link is stored yet. Configure Stripe or use
-                manual paid fallback after receiving payment another way.
-              </p>
-            )}
-          </div>
-        </section>
+            </form>
+
+            <div className="mt-6 border-t border-forest-900/10 pt-5">
+              <h3 className="text-sm font-semibold uppercase text-clay">
+                Payment Status
+              </h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <StatusBadge status={application.payment_status} />
+                {linkedProfile?.membership_status ? (
+                  <StatusBadge status={linkedProfile.membership_status} />
+                ) : null}
+              </div>
+              {application.stripe_payment_link ? (
+                <div className="mt-4 grid gap-3">
+                  <input
+                    readOnly
+                    value={application.stripe_payment_link}
+                    className="min-h-11 w-full rounded-md border border-forest-900/20 bg-forest-50 px-3 py-2 text-sm text-forest-900/75"
+                  />
+                  <div className="flex flex-wrap gap-3">
+                    <CopyLinkButton value={application.stripe_payment_link} />
+                    <a
+                      href={application.stripe_payment_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-10 items-center justify-center rounded-md border border-forest-900/20 px-4 py-2 text-sm font-semibold text-clay transition hover:bg-forest-50"
+                    >
+                      Open payment link
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-4 text-sm leading-6 text-forest-900/70">
+                  No Stripe payment link is stored yet. Configure Stripe or use
+                  manual paid fallback after receiving payment another way.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-md border border-red-200 bg-red-50 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-red-900">Danger Zone</h2>
+            <p className="mt-3 text-sm leading-6 text-red-800">
+              Delete this application only when it was entered by mistake. This
+              also removes related payment records and unlinks the member profile.
+            </p>
+            <form className="mt-5">
+              <input type="hidden" name="id" value={application.id} />
+              <ConfirmSubmitButton
+                formAction={deleteApplication}
+                message="Delete this application permanently?"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-red-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-800"
+              >
+                Delete Application
+              </ConfirmSubmitButton>
+            </form>
+          </section>
+        </div>
       </div>
     </div>
   );

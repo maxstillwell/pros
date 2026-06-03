@@ -302,6 +302,29 @@ export async function markApplicationManuallyPaid(formData: FormData) {
   redirect(`/admin/applications/${application.id}?saved=manual-paid`);
 }
 
+export async function deleteApplication(formData: FormData) {
+  const { id, supabase } = await getApplicationActionContext(formData);
+
+  await supabase
+    .from("profiles")
+    .update({ linked_application_id: null })
+    .eq("linked_application_id", id);
+  await supabase.from("payments").delete().eq("application_id", id);
+
+  const { error } = await supabase.from("applications").delete().eq("id", id);
+
+  revalidatePath("/admin");
+  revalidatePath("/admin/applications");
+  revalidatePath("/admin/members");
+  revalidatePath("/admin/payments");
+
+  if (error) {
+    redirect(`/admin/applications/${id}?error=delete`);
+  }
+
+  redirect("/admin/applications?saved=deleted");
+}
+
 export async function rejectApplication(formData: FormData) {
   const { id, notes, adminProfile, supabase } =
     await getApplicationActionContext(formData);

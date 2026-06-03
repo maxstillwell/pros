@@ -5,6 +5,7 @@ import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
 import { CopyLinkButton } from "@/components/admin/copy-link-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
+  deleteMember,
   markMemberActive,
   markMemberCancelled,
   markMemberExpired,
@@ -117,7 +118,7 @@ export default async function AdminMemberDetailPage({
           </span>
         </div>
         <p className="mt-3 text-sm font-semibold text-clay">
-          {member.member_number ?? "No member number yet"}
+          Profile ID: {member.member_number ?? "No member number yet"}
         </p>
         <Link
           href="/admin/members"
@@ -173,9 +174,10 @@ export default async function AdminMemberDetailPage({
                 Email
               </span>
               <input
-                value={member.email}
-                disabled
-                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 bg-forest-50 px-3 py-2 text-sm text-forest-900/70"
+                name="email"
+                type="email"
+                defaultValue={member.email}
+                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
               />
             </label>
             <label className="block">
@@ -340,6 +342,12 @@ export default async function AdminMemberDetailPage({
                 >
                   View application
                 </Link>
+                <a
+                  href={`/admin/applications/${linkedApplication.id}/pdf`}
+                  className="ml-4 mt-3 inline-flex font-semibold text-clay hover:text-forest-900"
+                >
+                  Download PDF
+                </a>
               </div>
             ) : (
               <p className="mt-3 text-sm leading-6 text-forest-900/70">
@@ -465,6 +473,25 @@ export default async function AdminMemberDetailPage({
                 No payment records found yet.
               </p>
             )}
+          </section>
+
+          <section className="rounded-md border border-red-200 bg-red-50 p-6 shadow-sm">
+            <h2 className="text-xl font-semibold text-red-900">Danger Zone</h2>
+            <p className="mt-3 text-sm leading-6 text-red-800">
+              Delete this member profile only when it was created by mistake.
+              Linked applications are kept unless you delete them separately.
+            </p>
+            <form className="mt-5">
+              <input type="hidden" name="id" value={member.id} />
+              <input type="hidden" name="returnTo" value={`/admin/members/${member.id}`} />
+              <ConfirmSubmitButton
+                formAction={deleteMember}
+                message="Delete this member permanently?"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-red-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-800"
+              >
+                Delete Member
+              </ConfirmSubmitButton>
+            </form>
           </section>
         </div>
       </div>
