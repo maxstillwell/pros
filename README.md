@@ -10,7 +10,7 @@ and Supabase-backed club records.
 - TypeScript
 - Tailwind CSS
 - Supabase Auth and Postgres
-- Stripe Checkout placeholders
+- Stripe Checkout membership payments
 - Resend application emails
 - Vercel deployment target
 
@@ -46,6 +46,7 @@ ADMIN_SESSION_SECRET=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_MEMBERSHIP_PRICE_ID=
+STRIPE_MEMBERSHIP_MODE=payment
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or `STRIPE_SECRET_KEY` to client
@@ -163,6 +164,7 @@ RESEND_FROM_EMAIL=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_MEMBERSHIP_PRICE_ID=
+STRIPE_MEMBERSHIP_MODE=payment
 ```
 
 Supabase keys go into Vercel, not GitHub. `SUPABASE_SERVICE_ROLE_KEY` must stay
@@ -173,7 +175,9 @@ Variables without `NEXT_PUBLIC_` are server-side only.
 `ADMIN_SESSION_SECRET` can be any long random string and is used to sign the
 admin session cookie. Resend and Stripe values can stay empty until those
 services are ready. Resend is used for application emails when configured.
-Stripe is still a later phase.
+Stripe is used for approved membership payment links when configured. If Stripe
+is not configured yet, admins can still approve applications and mark payment as
+paid manually.
 
 ### Supabase
 
@@ -243,9 +247,11 @@ Admin:
 3. Open `/admin`.
 4. Open `/admin/applications`.
 5. Review a test application.
-6. Approve or reject it.
-7. Open `/admin/members`.
-8. Confirm the approved member appears.
+6. Approve it and confirm it receives a member number.
+7. Confirm the payment email is sent or use the manual paid fallback.
+8. Confirm the application payment status changes to `paid`.
+9. Open `/admin/members`.
+10. Confirm the member is linked to the application and marked active.
 
 ## Membership Admin Workflow
 
@@ -277,15 +283,23 @@ http://localhost:3000/admin/members
 5. Review applicant details, emergency contact, interests, acknowledgements, waiver, consent, and signature.
 6. Approve or reject the application.
 7. Approved applications create or update a member profile with status `approved`.
+8. Approved applications receive a generated member number like `PROS-001`.
+9. If Stripe is configured, approval creates a Checkout link and sends the payment email.
+10. If payment is received outside Stripe, use `Mark Payment Manually Paid`.
 
 ### How to manage members
 
 1. Open `/admin/members`.
 2. Search or filter by membership status.
 3. Open the member profile.
-4. Update contact details, notes, status, membership dates, or Stripe customer ID.
+4. Update contact details, notes, status, payment status, membership dates, member number, or Stripe IDs.
 5. Use Mark Active, Mark Expired, or Mark Cancelled for common status changes.
-6. Save changes.
+6. Use Resend Payment Email or Mark Payment Manually Paid when needed.
+7. Save changes.
+
+### Date display
+
+Admin and application dates are displayed in `Australia/Melbourne` time.
 
 ### Email setup
 
@@ -306,10 +320,9 @@ log records `skipped` or `failed`.
 
 ### Current limitations
 
-- Stripe payment link automation is not implemented yet.
+- Shop checkout remains a later phase.
 - Full renewal reminders are not implemented yet.
 - Advanced member roles are not implemented yet.
-- Shop checkout remains a later phase.
 - Advanced news/member-only publishing remains a later phase.
 
 ## Current scope
@@ -323,22 +336,43 @@ Implemented in this first framework:
 - Zod-validated membership application form
 - Admin dashboard shell
 - Applications list, filters, search, detail view, notes, approve, and reject actions
-- Member list, filters, search, detail view, status updates, notes, and linked application view
+- Application approval with member number generation, payment email, Stripe Checkout link, manual paid fallback, and active-member conversion
+- Member list, filters, search, detail view, payment status updates, notes, and linked application view
+- Stripe membership webhook for Checkout completion, invoice success/failure, and subscription cancellation
 - Placeholder posts, products, emails, settings admin pages
-- Placeholder API routes for Stripe and Resend
+- Placeholder shop Stripe route and post-update email route
 
 ## Stripe notes
 
-Stripe is intentionally not implemented in this first build. Placeholder routes
-exist at:
+Membership payment links are implemented through Stripe Checkout. Create a
+membership Product and recurring or one-time Price in Stripe, then add the Price
+ID to `STRIPE_MEMBERSHIP_PRICE_ID`.
+
+The implemented membership routes are:
 
 - `POST /api/stripe/create-membership-checkout-session`
-- `POST /api/stripe/create-shop-checkout-session`
 - `POST /api/stripe/webhook`
 
-Next phase work should add Stripe SDK usage server-side only, verify webhook
-signatures, store payment records idempotently, and activate memberships only
-after confirmed membership payment.
+The shop checkout route remains a placeholder:
+
+- `POST /api/stripe/create-shop-checkout-session`
+
+Configure the Stripe webhook endpoint as:
+
+```txt
+https://YOUR_VERCEL_DOMAIN/api/stripe/webhook
+```
+
+Subscribe to these events:
+
+```txt
+checkout.session.completed
+invoice.payment_succeeded
+invoice.payment_failed
+customer.subscription.deleted
+```
+
+Copy the webhook signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 ## Resend notes
 
@@ -346,7 +380,9 @@ Resend is implemented for membership application workflow emails:
 
 - Applicant confirmation email after application submission
 - Admin notification email after application submission
-- Applicant approval email
+- Applicant approval and payment-link email
+- Applicant payment-link resend email
+- Applicant payment-confirmed welcome email
 - Applicant rejection email
 
 The news-update email route remains a placeholder:
@@ -377,7 +413,6 @@ npm.cmd run typecheck
 
 - Replace placeholder news content with Supabase post queries and editing.
 - Build the full admin post editor.
-- Add Stripe membership checkout and webhook handling.
 - Add post and custom member update email sending.
 - Add member-only post access in the public news detail page.
 - Add product management and shop checkout in a later phase.
