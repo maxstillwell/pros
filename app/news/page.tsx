@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
 import { formatDate } from "@/lib/format";
@@ -14,6 +15,16 @@ export default async function NewsPage() {
           <h1 className="mt-3 text-4xl font-semibold text-forest-900">
             Club news and public updates.
           </h1>
+          <div className="mt-8 overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
+            <Image
+              src="/images/pros-track-morning.jpg"
+              alt="Morning track through Australian bushland"
+              width={1600}
+              height={900}
+              unoptimized
+              className="aspect-[16/7] w-full object-cover"
+            />
+          </div>
           <div className="mt-10 grid gap-5">
             {posts.length ? (
               posts.map((post) => (

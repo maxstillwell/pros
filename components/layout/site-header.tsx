@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProsLogo } from "@/components/layout/pros-logo";
 
 const navItems = [
   { href: "/about", label: "About" },
@@ -13,13 +14,11 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-forest-900/10 bg-stone/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-        <Link
+        <ProsLogo
           href="/"
-          className="text-base font-semibold text-forest-900"
-          aria-label="Prime Range Outdoor Society Inc. home"
-        >
-          PROS
-        </Link>
+          showSubtitle={false}
+          markClassName="h-10 w-10"
+        />
 
         <nav className="hidden items-center gap-7 text-sm font-medium text-forest-900/80 md:flex">
           {navItems.map((item) => (

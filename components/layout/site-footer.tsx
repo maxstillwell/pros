@@ -1,11 +1,17 @@
 import Link from "next/link";
+import { ProsLogo } from "@/components/layout/pros-logo";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-forest-900/10 bg-forest-900 text-stone">
       <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 md:grid-cols-[2fr_1fr_1fr]">
         <div>
-          <p className="text-lg font-semibold">Prime Range Outdoor Society Inc.</p>
+          <ProsLogo
+            invert
+            label="Prime Range Outdoor Society Inc."
+            markClassName="h-14 w-14"
+            showSubtitle={false}
+          />
           <p className="mt-3 max-w-xl text-sm leading-6 text-stone/75">
             A private outdoor society for members who value responsible recreation,
             safety, community, and respect for the outdoors.

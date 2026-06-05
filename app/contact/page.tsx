@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ContactForm } from "@/components/forms/contact-form";
 import { SiteShell } from "@/components/layout/site-shell";
 
@@ -33,6 +34,16 @@ export default async function ContactPage({ searchParams }: ContactPageProps) {
                 For sponsorship, membership, events, website questions or
                 general club communications, use the form.
               </p>
+            </div>
+            <div className="mt-6 overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
+              <Image
+                src="/images/pros-landscape-range.jpg"
+                alt="Australian range landscape at golden hour"
+                width={1600}
+                height={914}
+                unoptimized
+                className="aspect-[16/10] w-full object-cover"
+              />
             </div>
           </div>
 

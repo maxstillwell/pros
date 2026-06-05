@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SiteShell } from "@/components/layout/site-shell";
 
 export default function AboutPage() {
@@ -15,6 +16,17 @@ export default function AboutPage() {
             outdoors. The club is private, practical, and focused on clear
             communication.
           </p>
+
+          <div className="mt-10 overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
+            <Image
+              src="/images/pros-landscape-range.jpg"
+              alt="Australian bushland range at golden hour"
+              width={1600}
+              height={914}
+              unoptimized
+              className="aspect-[16/8] w-full object-cover"
+            />
+          </div>
 
           <div className="mt-12 grid gap-5 md:grid-cols-3">
             {[

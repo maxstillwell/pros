@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
 import { SponsorCard } from "@/components/sponsors/sponsor-card";
@@ -10,32 +11,45 @@ export default async function SponsorshipPage() {
   return (
     <SiteShell>
       <main className="px-5 py-16">
-        <div className="mx-auto max-w-6xl">
-          <p className="text-sm font-semibold uppercase text-clay">
-            Sponsorship
-          </p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-forest-900">
-            Our sponsor platform.
-          </h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-forest-900/74">
-            PROS showcases sponsors whose values align with responsible outdoor
-            recreation, member development, safety, conservation and practical
-            community standards.
-          </p>
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <p className="text-sm font-semibold uppercase text-clay">
+              Sponsorship
+            </p>
+            <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-forest-900">
+              Our sponsor platform.
+            </h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-forest-900/74">
+              PROS showcases sponsors whose values align with responsible outdoor
+              recreation, member development, safety, conservation and practical
+              community standards.
+            </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/sponsorship/become"
-              className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
-            >
-              Become a Sponsor
-            </Link>
-            <Link
-              href="/contact?topic=sponsorship"
-              className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
-            >
-              Contact Us
-            </Link>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href="/sponsorship/become"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+              >
+                Become a Sponsor
+              </Link>
+              <Link
+                href="/contact?topic=sponsorship"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
+              >
+                Contact Us
+              </Link>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
+            <Image
+              src="/images/pros-sponsor-showcase.jpg"
+              alt="Outdoor sponsor display table at a field-day"
+              width={1600}
+              height={914}
+              unoptimized
+              className="aspect-[16/10] w-full object-cover"
+            />
           </div>
         </div>
 

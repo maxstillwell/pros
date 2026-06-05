@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProsLogo } from "@/components/layout/pros-logo";
 
 const adminNav = [
   { href: "/admin", label: "Dashboard" },
@@ -19,9 +20,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-forest-50 text-forest-900">
       <div className="grid min-h-screen md:grid-cols-[16rem_1fr]">
         <aside className="border-b border-forest-900/10 bg-forest-900 px-5 py-5 text-stone md:border-b-0 md:border-r">
-          <Link href="/" className="block text-lg font-semibold">
-            PROS Admin
-          </Link>
+          <ProsLogo
+            href="/"
+            invert
+            label="PROS Admin"
+            markClassName="h-10 w-10"
+            subtitle="Club dashboard"
+          />
           <nav className="mt-8 flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
             {adminNav.map((item) => (
               <Link
