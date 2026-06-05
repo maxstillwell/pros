@@ -39,6 +39,10 @@ function dollarsValue(amount: number | null) {
   return amount === null ? "" : String(amount / 100);
 }
 
+function isStoredImage(value: string | null | undefined) {
+  return Boolean(value?.startsWith("data:image/"));
+}
+
 function TierSelect({
   selectedId,
   tiers,
@@ -113,11 +117,43 @@ function SponsorFields({
         <input
           name="logo_url"
           type="url"
-          defaultValue={sponsor?.logo_url ?? ""}
+          defaultValue={isStoredImage(sponsor?.logo_url) ? "" : (sponsor?.logo_url ?? "")}
           placeholder="https://example.com/logo.png"
           className={inputClass}
         />
       </label>
+      <label className={labelClass}>
+        Upload logo image
+        <input
+          name="logo_file"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          className="mt-2 block w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-forest-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+        />
+        <span className="mt-2 block text-xs font-normal leading-5 text-forest-900/58">
+          PNG, JPG, WebP or GIF. Keep it under 750 KB.
+        </span>
+      </label>
+      {sponsor?.logo_url ? (
+        <div className="md:col-span-2">
+          <input
+            type="hidden"
+            name="existing_logo_url"
+            value={sponsor.logo_url}
+          />
+          <div className="flex flex-wrap items-center gap-4 rounded-md border border-forest-900/10 bg-forest-50 p-4">
+            <div
+              className="h-20 w-32 rounded-md border border-forest-900/10 bg-white bg-contain bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${sponsor.logo_url})` }}
+              aria-label={`${sponsor.name} logo preview`}
+            />
+            <label className="flex items-center gap-3 text-sm font-semibold text-forest-900">
+              <input name="remove_logo" type="checkbox" />
+              Remove current logo
+            </label>
+          </div>
+        </div>
+      ) : null}
       <label className={labelClass}>
         Contact name
         <input

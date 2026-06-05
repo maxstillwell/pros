@@ -19,6 +19,22 @@ function readBool(formData: FormData, key: string) {
   return formData.get(key) === "on";
 }
 
+function readFile(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "arrayBuffer" in value &&
+    "size" in value &&
+    "type" in value
+  ) {
+    return value as File;
+  }
+
+  return null;
+}
+
 function readSortOrder(formData: FormData) {
   const value = Number(readString(formData, "sort_order"));
   return Number.isFinite(value) ? Math.round(value) : 0;
@@ -43,7 +59,35 @@ function slugify(value: string) {
     .slice(0, 80);
 }
 
-function sponsorPayload(formData: FormData) {
+async function readLogoValue(formData: FormData) {
+  if (readBool(formData, "remove_logo")) {
+    return null;
+  }
+
+  const logoFile = readFile(formData, "logo_file");
+
+  if (logoFile?.size) {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
+    if (!allowedTypes.includes(logoFile.type)) {
+      redirect("/admin/sponsors?error=logo-type");
+    }
+
+    if (logoFile.size > 750_000) {
+      redirect("/admin/sponsors?error=logo-size");
+    }
+
+    const bytes = Buffer.from(await logoFile.arrayBuffer());
+    return `data:${logoFile.type};base64,${bytes.toString("base64")}`;
+  }
+
+  return (
+    readNullableString(formData, "logo_url") ??
+    readNullableString(formData, "existing_logo_url")
+  );
+}
+
+async function sponsorPayload(formData: FormData) {
   const name = readString(formData, "name");
   const slug = slugify(readString(formData, "slug") || name);
 
@@ -58,7 +102,7 @@ function sponsorPayload(formData: FormData) {
     contact_phone: readNullableString(formData, "contact_phone"),
     description: readNullableString(formData, "description"),
     featured: readBool(formData, "featured"),
-    logo_url: readNullableString(formData, "logo_url"),
+    logo_url: await readLogoValue(formData),
     name,
     slug,
     sort_order: readSortOrder(formData),
@@ -124,7 +168,7 @@ function revalidateSponsorPaths(slug?: string) {
 
 export async function createSponsor(formData: FormData) {
   const { supabase } = await getSponsorActionContext(formData, false);
-  const payload = sponsorPayload(formData);
+  const payload = await sponsorPayload(formData);
   const { error } = await supabase.from("sponsors").insert(payload);
 
   revalidateSponsorPaths(payload.slug);
@@ -138,7 +182,7 @@ export async function createSponsor(formData: FormData) {
 
 export async function updateSponsor(formData: FormData) {
   const { id, supabase } = await getSponsorActionContext(formData);
-  const payload = sponsorPayload(formData);
+  const payload = await sponsorPayload(formData);
   const { data: existing } = await supabase
     .from("sponsors")
     .select("slug")
