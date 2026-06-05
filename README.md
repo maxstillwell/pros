@@ -275,6 +275,9 @@ http://localhost:3000/admin/applications
 Members:
 http://localhost:3000/admin/members
 
+Posts:
+http://localhost:3000/admin/posts
+
 Sponsors:
 http://localhost:3000/admin/sponsors
 
@@ -314,6 +317,24 @@ http://localhost:3000/admin/contact
 
 Admin and application dates are displayed in `Australia/Melbourne` time.
 
+## News Publishing Workflow
+
+Public news is managed from `/admin/posts` and displayed on `/news`.
+
+### How to publish news
+
+1. Log in as admin.
+2. Open `/admin/posts`.
+3. Click `New Post`.
+4. Add a title, optional slug, excerpt, and body.
+5. Set visibility to `public` for public website news.
+6. Set status to `published`, or save as `draft`.
+7. Published public posts appear on `/news` and `/news/[slug]`.
+8. Use the post edit page to update, publish, move back to draft, or delete.
+
+`members_only` posts can be created and managed now, but public news pages only
+show `public` posts. Member-only display remains a later access-control step.
+
 ## Sponsorship Workflow
 
 ### Public URLs
@@ -337,10 +358,14 @@ sponsor tiers and sends enquiries to the contact form.
 1. Log in as admin.
 2. Open `/admin/sponsors`.
 3. Create a sponsor with name, tier, summary, profile description, website URL, logo URL, and contact details.
-4. Keep `Active` checked when the sponsor should appear publicly.
-5. Check `Featured on home` when the sponsor logo should appear in the home page marquee.
-6. Save changes.
-7. Use `Delete Sponsor` only for mistaken or duplicate sponsor records.
+4. Upload a logo image, or paste a logo URL.
+5. Keep `Active` checked when the sponsor should appear publicly.
+6. Check `Featured on home` when the sponsor logo should appear in the home page marquee.
+7. Save changes.
+8. Use `Delete Sponsor` only for mistaken or duplicate sponsor records.
+
+Uploaded logo images are stored in the existing sponsor logo field as a data URL
+to keep setup simple. Use PNG, JPG, WebP or GIF under 750 KB.
 
 ### Sponsor tiers
 
@@ -396,7 +421,7 @@ log records `skipped` or `failed`.
 - Shop checkout remains a later phase.
 - Full renewal reminders are not implemented yet.
 - Advanced member roles are not implemented yet.
-- Advanced news/member-only publishing remains a later phase.
+- Member-only news display remains a later phase.
 
 ## Current scope
 
@@ -412,6 +437,7 @@ Implemented in this first framework:
 - Application approval with member number generation, payment email, Stripe Checkout link, manual paid fallback, and active-member conversion
 - Member list, filters, search, detail view, payment status updates, notes, and linked application view
 - Stripe membership webhook for Checkout completion, invoice success/failure, and subscription cancellation
+- News list, public news detail pages, and admin news create/edit/publish/delete workflow
 - Sponsor showcase page, sponsor detail pages, become-a-sponsor tier page, home page sponsor logo marquee, and sponsor admin management
 - Public contact form and admin contact ticket management
 - Placeholder posts, products, emails, settings admin pages
@@ -486,8 +512,6 @@ npm.cmd run typecheck
 
 ## Known TODOs
 
-- Replace placeholder news content with Supabase post queries and editing.
-- Build the full admin post editor.
 - Add post and custom member update email sending.
 - Add member-only post access in the public news detail page.
 - Add product management and shop checkout in a later phase.

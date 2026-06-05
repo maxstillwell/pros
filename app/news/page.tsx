@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
-import { placeholderPosts } from "@/lib/site-content";
+import { formatDate } from "@/lib/format";
+import { getPublicNewsPosts } from "@/lib/news";
 
-export default function NewsPage() {
+export default async function NewsPage() {
+  const posts = await getPublicNewsPosts();
+
   return (
     <SiteShell>
       <main className="px-5 py-16">
@@ -12,22 +15,34 @@ export default function NewsPage() {
             Club news and public updates.
           </h1>
           <div className="mt-10 grid gap-5">
-            {placeholderPosts.map((post) => (
-              <article
-                key={post.slug}
-                className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm"
-              >
-                <p className="text-sm text-forest-900/58">{post.publishedAt}</p>
-                <h2 className="mt-2 text-2xl font-semibold text-forest-900">
-                  <Link href={`/news/${post.slug}`} className="hover:text-clay">
-                    {post.title}
-                  </Link>
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-forest-900/72">
-                  {post.excerpt}
+            {posts.length ? (
+              posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm"
+                >
+                  <p className="text-sm text-forest-900/58">
+                    {formatDate(post.published_at ?? post.created_at)}
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-forest-900">
+                    <Link href={`/news/${post.slug}`} className="hover:text-clay">
+                      {post.title}
+                    </Link>
+                  </h2>
+                  {post.excerpt ? (
+                    <p className="mt-3 text-sm leading-6 text-forest-900/72">
+                      {post.excerpt}
+                    </p>
+                  ) : null}
+                </article>
+              ))
+            ) : (
+              <div className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
+                <p className="text-sm leading-6 text-forest-900/70">
+                  No public news has been published yet.
                 </p>
-              </article>
-            ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
