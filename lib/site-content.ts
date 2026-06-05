@@ -1,9 +1,9 @@
 export const membershipSteps = [
-  "Submit your application.",
-  "The committee reviews your application.",
-  "Approved applicants receive a secure membership fee payment link.",
-  "Once payment is confirmed, your membership is activated.",
-  "Active members receive access to member updates and club communications.",
+  "Submit your application with contact details, emergency contact, interests and required acknowledgements.",
+  "The committee reviews the application against PROS values, safety expectations and membership suitability.",
+  "Approved applicants receive a secure annual membership fee payment link.",
+  "Once payment is confirmed, the administrator links the application to a member record and activates membership.",
+  "Active members can receive member updates, club communications and eligibility for member-only activities.",
 ];
 
 export const placeholderPosts = [

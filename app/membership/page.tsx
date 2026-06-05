@@ -13,13 +13,42 @@ export default function MembershipPage() {
               Membership
             </p>
             <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-forest-900">
-              Membership is by application and committee review.
+              PROS is a member-only outdoor association.
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-forest-900/74">
-              Approved applicants receive a secure payment link for the annual
-              membership fee. Payment does not automatically approve membership
-              until the committee review is complete.
+              Membership is required before a person may participate in PROS
+              activities, events and member communications, unless the committee
+              has approved a one-time first guest attendance nominated by a
+              current member.
             </p>
+
+            <div className="mt-8 grid gap-4">
+              <section className="rounded-md border border-forest-900/10 bg-white p-5 shadow-sm">
+                <h2 className="text-xl font-semibold text-forest-900">
+                  Membership required
+                </h2>
+                <p className="mt-3 text-base leading-7 text-forest-900/74">
+                  PROS activities are for approved members. Members are expected
+                  to follow society rules, committee directions, activity safety
+                  briefings, landowner requirements and all applicable laws,
+                  including firearm, hunting, fishing, camping, access and
+                  conservation requirements.
+                </p>
+              </section>
+              <section className="rounded-md border border-forest-900/10 bg-white p-5 shadow-sm">
+                <h2 className="text-xl font-semibold text-forest-900">
+                  First-time guest rule
+                </h2>
+                <p className="mt-3 text-base leading-7 text-forest-900/74">
+                  A non-member may attend one activity only if nominated by an
+                  active member and approved by the committee before the event.
+                  Guests must complete any required acknowledgements, meet
+                  safety and legal requirements, and follow all directions. After
+                  that first approved attendance, membership is required before
+                  attending further activities.
+                </p>
+              </section>
+            </div>
 
             <ol className="mt-12 grid gap-4">
               {membershipSteps.map((step, index) => (
