@@ -2,9 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
 import { SponsorLogoMarquee } from "@/components/sponsors/sponsor-logo-marquee";
-import { LinkButton } from "@/components/ui/link-button";
 import { membershipSteps } from "@/lib/site-content";
 import { getSponsors } from "@/lib/sponsors";
+
+const societyFocus = [
+  "Private Hunting Properties",
+  "Organised Hunting Expeditions",
+  "Long Range Sporting Facilities",
+  "Private Boating Activities",
+  "Heritage Rural Experiences",
+  "Camping & Outdoor Events",
+  "Member Community",
+];
 
 export default async function HomePage() {
   const featuredSponsors = await getSponsors({ featuredOnly: true });
@@ -12,7 +21,7 @@ export default async function HomePage() {
   return (
     <SiteShell>
       <main>
-        <section className="relative flex min-h-[72svh] items-center overflow-hidden bg-forest-900 text-white">
+        <section className="relative flex min-h-[74svh] items-center overflow-hidden bg-[#070604] text-[#d6ad45]">
           <Image
             src="/images/pros-hero.png"
             alt="Open bushland and distant range at golden hour"
@@ -20,25 +29,44 @@ export default async function HomePage() {
             priority
             unoptimized
             sizes="100vw"
-            className="object-cover"
+            className="object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-forest-900/55" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/88 to-black/52" />
           <div className="relative mx-auto w-full max-w-6xl px-5 py-20">
-            <p className="text-sm font-semibold uppercase text-stone/85">
-              Private outdoor society
+            <p className="text-sm font-semibold uppercase text-[#f1d991]/82">
+              Private member-only outdoor society
             </p>
-            <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-tight md:text-7xl">
-              Prime Range Outdoor Society Inc.
+            <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-tight text-[#f3d77a] md:text-7xl">
+              Prime Range Outdoor Society
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-stone/90">
-              A private outdoor society for members who value responsible
-              recreation, safety, community, and respect for the outdoors.
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#f6e8b5]/82">
+              A private membership society focused on hunting properties,
+              organised expeditions, sporting facilities, boating, rural
+              heritage, camping and member community.
             </p>
+            <div className="mt-8 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {societyFocus.map((item) => (
+                <div
+                  key={item}
+                  className="rounded-md border border-[#d6ad45]/25 bg-black/40 px-4 py-3 text-sm font-semibold text-[#f3d77a] shadow-sm backdrop-blur"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <LinkButton href="/apply">Apply for Membership</LinkButton>
-              <LinkButton href="/news" variant="secondary">
-                Read Club News
-              </LinkButton>
+              <Link
+                href="/apply"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-[#d6ad45] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#f3d77a]"
+              >
+                Apply for Membership
+              </Link>
+              <Link
+                href="/membership"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-[#d6ad45]/40 px-5 py-3 text-sm font-semibold text-[#f3d77a] transition hover:bg-[#d6ad45] hover:text-black"
+              >
+                Membership Information
+              </Link>
             </div>
           </div>
         </section>
@@ -86,34 +114,27 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="bg-white px-5 py-16">
-          <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-3">
-            {[
-              {
-                title: "Responsible recreation",
-                body: "A club foundation built around safety, clear expectations, and care for outdoor spaces.",
-              },
-              {
-                title: "Community first",
-                body: "A private member environment for people who value practical support and shared standards.",
-              },
-              {
-                title: "Easy to maintain",
-                body: "The new website keeps the public pages, applications, and admin workflows simple.",
-              },
-            ].map((item) => (
+        <section className="bg-[#070604] px-5 py-16 text-[#d6ad45]">
+          <div className="mx-auto max-w-6xl">
+            <p className="text-sm font-semibold uppercase text-[#f1d991]/76">
+              Society focus
+            </p>
+            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-[#f3d77a]">
+              Built around private access, organised activities and a strong
+              member community.
+            </h2>
+            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {societyFocus.map((item) => (
               <article
-                key={item.title}
-                className="rounded-md border border-forest-900/10 p-6"
+                key={item}
+                className="rounded-md border border-[#d6ad45]/20 bg-[#0f0c08] p-5"
               >
-                <h3 className="text-xl font-semibold text-forest-900">
-                  {item.title}
+                <h3 className="text-lg font-semibold text-[#f3d77a]">
+                  {item}
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-forest-900/70">
-                  {item.body}
-                </p>
               </article>
             ))}
+            </div>
           </div>
         </section>
 
