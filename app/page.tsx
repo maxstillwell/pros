@@ -40,20 +40,9 @@ export default async function HomePage() {
               Prime Range Outdoor Society
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-stone/90">
-              A private membership society focused on hunting properties,
-              organised expeditions, sporting facilities, boating, rural
-              heritage, camping and member community.
+              A private member-only outdoor society built around responsible
+              recreation, fieldcraft, conservation and fellowship.
             </p>
-            <div className="mt-8 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {societyFocus.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-md border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/apply"
@@ -123,18 +112,14 @@ export default async function HomePage() {
               Built around private access, organised activities and a strong
               member community.
             </h2>
-            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <ul className="mt-8 grid gap-x-10 gap-y-4 text-lg font-semibold text-forest-900 md:grid-cols-2 lg:grid-cols-3">
               {societyFocus.map((item) => (
-                <article
-                  key={item}
-                  className="rounded-md border border-forest-900/10 bg-white p-5 shadow-sm"
-                >
-                  <h3 className="text-lg font-semibold text-forest-900">
-                    {item}
-                  </h3>
-                </article>
+                <li key={item} className="flex items-start gap-3">
+                  <span className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-clay" />
+                  <span>{item}</span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </section>
 
