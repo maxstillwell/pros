@@ -21,7 +21,7 @@ export default async function HomePage() {
   return (
     <SiteShell>
       <main>
-        <section className="relative flex min-h-[74svh] items-center overflow-hidden bg-[#070604] text-[#d6ad45]">
+        <section className="relative flex min-h-[72svh] items-center overflow-hidden bg-forest-900 text-white">
           <Image
             src="/images/pros-hero.png"
             alt="Open bushland and distant range at golden hour"
@@ -29,17 +29,17 @@ export default async function HomePage() {
             priority
             unoptimized
             sizes="100vw"
-            className="object-cover opacity-40"
+            className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/88 to-black/52" />
+          <div className="absolute inset-0 bg-forest-900/58" />
           <div className="relative mx-auto w-full max-w-6xl px-5 py-20">
-            <p className="text-sm font-semibold uppercase text-[#f1d991]/82">
+            <p className="text-sm font-semibold uppercase text-stone/85">
               Private member-only outdoor society
             </p>
-            <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-tight text-[#f3d77a] md:text-7xl">
+            <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-tight md:text-7xl">
               Prime Range Outdoor Society
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#f6e8b5]/82">
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-stone/90">
               A private membership society focused on hunting properties,
               organised expeditions, sporting facilities, boating, rural
               heritage, camping and member community.
@@ -48,7 +48,7 @@ export default async function HomePage() {
               {societyFocus.map((item) => (
                 <div
                   key={item}
-                  className="rounded-md border border-[#d6ad45]/25 bg-black/40 px-4 py-3 text-sm font-semibold text-[#f3d77a] shadow-sm backdrop-blur"
+                  className="rounded-md border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur"
                 >
                   {item}
                 </div>
@@ -57,13 +57,13 @@ export default async function HomePage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/apply"
-                className="inline-flex min-h-11 items-center justify-center rounded-md bg-[#d6ad45] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#f3d77a]"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
               >
                 Apply for Membership
               </Link>
               <Link
                 href="/membership"
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-[#d6ad45]/40 px-5 py-3 text-sm font-semibold text-[#f3d77a] transition hover:bg-[#d6ad45] hover:text-black"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-white/55 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
               >
                 Membership Information
               </Link>
@@ -114,26 +114,26 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="bg-[#070604] px-5 py-16 text-[#d6ad45]">
+        <section className="bg-white px-5 py-16">
           <div className="mx-auto max-w-6xl">
-            <p className="text-sm font-semibold uppercase text-[#f1d991]/76">
+            <p className="text-sm font-semibold uppercase text-clay">
               Society focus
             </p>
-            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-[#f3d77a]">
+            <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-forest-900">
               Built around private access, organised activities and a strong
               member community.
             </h2>
             <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {societyFocus.map((item) => (
-              <article
-                key={item}
-                className="rounded-md border border-[#d6ad45]/20 bg-[#0f0c08] p-5"
-              >
-                <h3 className="text-lg font-semibold text-[#f3d77a]">
-                  {item}
-                </h3>
-              </article>
-            ))}
+                <article
+                  key={item}
+                  className="rounded-md border border-forest-900/10 bg-white p-5 shadow-sm"
+                >
+                  <h3 className="text-lg font-semibold text-forest-900">
+                    {item}
+                  </h3>
+                </article>
+              ))}
             </div>
           </div>
         </section>

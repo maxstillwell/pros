@@ -50,28 +50,6 @@ export default function MembershipPage() {
               </section>
             </div>
 
-            <ol className="mt-12 grid gap-4">
-              {membershipSteps.map((step, index) => (
-                <li
-                  key={step}
-                  className="grid gap-4 rounded-md border border-forest-900/10 bg-white p-5 shadow-sm md:grid-cols-[7rem_1fr]"
-                >
-                  <span className="text-sm font-semibold text-clay">
-                    Step {index + 1}
-                  </span>
-                  <p className="text-base leading-7 text-forest-900/78">
-                    {step}
-                  </p>
-                </li>
-              ))}
-            </ol>
-
-            <Link
-              href="/apply"
-              className="mt-10 inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
-            >
-              Apply for Membership
-            </Link>
           </div>
 
           <div className="overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
@@ -87,14 +65,14 @@ export default function MembershipPage() {
         </div>
 
         <section className="mx-auto mt-16 max-w-6xl">
-          <div className="rounded-md border border-[#d6ad45]/24 bg-[#070604] p-6 text-[#d6ad45] shadow-sm md:p-8">
-            <p className="text-sm font-semibold uppercase text-[#f1d991]/76">
+          <div className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm md:p-8">
+            <p className="text-sm font-semibold uppercase text-clay">
               Membership benefits
             </p>
-            <h2 className="mt-3 max-w-4xl text-3xl font-semibold text-[#f3d77a]">
+            <h2 className="mt-3 max-w-4xl text-3xl font-semibold text-forest-900">
               Access to outdoor, educational and recreational opportunities.
             </h2>
-            <p className="mt-5 max-w-4xl text-base leading-7 text-[#f6e8b5]/78">
+            <p className="mt-5 max-w-4xl text-base leading-7 text-forest-900/72">
               Membership of Prime Range Outdoor Society Inc. provides access to
               a range of outdoor, educational and recreational opportunities
               designed to promote responsible outdoor recreation, fieldcraft,
@@ -105,23 +83,62 @@ export default function MembershipPage() {
               {membershipBenefits.map((benefit) => (
                 <article
                   key={benefit.title}
-                  className="rounded-md border border-[#d6ad45]/18 bg-[#0f0c08] p-5"
+                  className="rounded-md border border-forest-900/10 bg-forest-50 p-5"
                 >
-                  <h3 className="text-xl font-semibold text-[#f3d77a]">
+                  <h3 className="text-xl font-semibold text-forest-900">
                     {benefit.title}
                   </h3>
-                  <p className="mt-3 text-sm leading-6 text-[#f6e8b5]/74">
+                  <p className="mt-3 text-sm leading-6 text-forest-900/72">
                     {benefit.body}
                   </p>
                 </article>
               ))}
             </div>
 
-            <p className="mt-7 border-t border-[#d6ad45]/18 pt-5 text-sm leading-6 text-[#f6e8b5]/70">
+            <p className="mt-7 border-t border-forest-900/10 pt-5 text-sm leading-6 text-forest-900/68">
               Activities, events and access opportunities may vary from year to
               year and are subject to availability, seasonal conditions, safety
               requirements, landholder approvals and applicable laws.
             </p>
+          </div>
+        </section>
+
+        <section className="mx-auto mt-16 max-w-6xl">
+          <div className="grid gap-8 md:grid-cols-[0.85fr_1.15fr]">
+            <div>
+              <p className="text-sm font-semibold uppercase text-clay">
+                Application flow
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold text-forest-900">
+                Simple application, careful review, clear next steps.
+              </h2>
+              <p className="mt-5 text-base leading-7 text-forest-900/72">
+                The committee reviews every application before payment or
+                member access is activated.
+              </p>
+              <Link
+                href="/apply"
+                className="mt-7 inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+              >
+                Apply for Membership
+              </Link>
+            </div>
+
+            <ol className="grid gap-4">
+              {membershipSteps.map((step, index) => (
+                <li
+                  key={step}
+                  className="grid gap-4 rounded-md border border-forest-900/10 bg-white p-5 shadow-sm md:grid-cols-[7rem_1fr]"
+                >
+                  <span className="text-sm font-semibold text-clay">
+                    Step {index + 1}
+                  </span>
+                  <p className="text-base leading-7 text-forest-900/78">
+                    {step}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
       </main>

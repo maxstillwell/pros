@@ -5,15 +5,15 @@ export default function ShopPage() {
   return (
     <SiteShell>
       <main className="px-5 py-16">
-        <div className="mx-auto max-w-5xl overflow-hidden rounded-md border border-[#d6ad45]/24 bg-[#070604] shadow-sm">
-          <div className="p-8 text-[#d6ad45] md:p-10">
-            <p className="text-sm font-semibold uppercase text-[#f1d991]/78">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-md border border-forest-900/10 bg-white shadow-sm">
+          <div className="p-8 md:p-10">
+            <p className="text-sm font-semibold uppercase text-clay">
               Member shop
             </p>
-            <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-[#f3d77a]">
+            <h1 className="mt-3 max-w-3xl text-4xl font-semibold text-forest-900">
               Member-only merchandise that supports PROS.
             </h1>
-            <p className="mt-5 max-w-3xl text-base leading-7 text-[#f6e8b5]/78">
+            <p className="mt-5 max-w-3xl text-base leading-7 text-forest-900/72">
               Individuals can support Prime Range Outdoor Society by purchasing
               member-exclusive merchandise. Shop purchases help sponsor private
               hunting properties, organised expeditions, sporting facilities,
@@ -27,7 +27,7 @@ export default function ShopPage() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-md border border-[#d6ad45]/20 bg-[#0f0c08] p-5 text-sm font-semibold text-[#f3d77a]"
+                  className="rounded-md border border-forest-900/10 bg-forest-50 p-5 text-sm font-semibold text-forest-900"
                 >
                   {item}
                 </div>
@@ -36,13 +36,13 @@ export default function ShopPage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/membership"
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-[#d6ad45]/35 px-5 py-3 text-sm font-semibold text-[#f3d77a] transition hover:bg-[#d6ad45] hover:text-black"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
               >
                 Membership Information
               </Link>
               <Link
                 href="/contact?topic=shop"
-                className="inline-flex min-h-11 items-center justify-center rounded-md bg-[#d6ad45] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#f3d77a]"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
               >
                 Contact PROS
               </Link>
