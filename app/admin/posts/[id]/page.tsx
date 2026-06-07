@@ -73,10 +73,10 @@ export default async function AdminPostDetailPage({
         </div>
         {post.status === "published" && post.visibility === "public" ? (
           <Link
-            href={`/news/${post.slug}`}
+            href={`/blog/${post.slug}`}
             className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50"
           >
-            View public post
+            View public article
           </Link>
         ) : null}
       </div>

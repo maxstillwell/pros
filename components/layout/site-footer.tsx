@@ -24,8 +24,8 @@ export function SiteFooter() {
           <Link href="/apply" className="hover:text-white">
             Apply
           </Link>
-          <Link href="/news" className="hover:text-white">
-            News
+          <Link href="/blog" className="hover:text-white">
+            Blog
           </Link>
           <Link href="/sponsorship" className="hover:text-white">
             Sponsorship

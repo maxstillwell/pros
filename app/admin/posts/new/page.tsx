@@ -16,7 +16,7 @@ export default async function AdminNewPostPage() {
       <div>
         <p className="text-sm font-semibold uppercase text-clay">New post</p>
         <h1 className="mt-2 text-3xl font-semibold text-forest-900">
-          Create news post
+          Create blog article
         </h1>
         <Link
           href="/admin/posts"

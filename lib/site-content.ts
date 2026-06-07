@@ -43,7 +43,7 @@ export const placeholderPosts = [
     slug: "welcome-new-framework",
     excerpt:
       "A first public update placeholder while the club prepares the new site foundation.",
-    body: "This placeholder post demonstrates the public news layout. In the first production build, published posts will come from Supabase and can be marked public or members-only.",
+    body: "This placeholder post demonstrates the public blog layout. Published articles come from Supabase and can be marked public or members-only.",
     publishedAt: "2026-05-31",
   },
   {

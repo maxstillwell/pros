@@ -229,7 +229,7 @@ Public pages:
 /apply
 /sponsorship
 /sponsorship/become
-/news
+/blog
 /shop
 /contact
 ```
@@ -317,22 +317,22 @@ http://localhost:3000/admin/contact
 
 Admin and application dates are displayed in `Australia/Melbourne` time.
 
-## News Publishing Workflow
+## Blog Publishing Workflow
 
-Public news is managed from `/admin/posts` and displayed on `/news`.
+Public blog articles are managed from `/admin/posts` and displayed on `/blog`.
 
-### How to publish news
+### How to publish blog articles
 
 1. Log in as admin.
 2. Open `/admin/posts`.
 3. Click `New Post`.
 4. Add a title, optional slug, excerpt, and body.
-5. Set visibility to `public` for public website news.
+5. Set visibility to `public` for public website blog articles.
 6. Set status to `published`, or save as `draft`.
-7. Published public posts appear on `/news` and `/news/[slug]`.
+7. Published public posts appear on `/blog` and `/blog/[slug]`.
 8. Use the post edit page to update, publish, move back to draft, or delete.
 
-`members_only` posts can be created and managed now, but public news pages only
+`members_only` posts can be created and managed now, but public blog pages only
 show `public` posts. Member-only display remains a later access-control step.
 
 ## Sponsorship Workflow
@@ -421,13 +421,13 @@ log records `skipped` or `failed`.
 - Shop checkout remains a later phase.
 - Full renewal reminders are not implemented yet.
 - Advanced member roles are not implemented yet.
-- Member-only news display remains a later phase.
+- Member-only blog display remains a later phase.
 
 ## Current scope
 
 Implemented in this first framework:
 
-- Public pages: home, about, membership, apply, sponsorship, become a sponsor, news, shop, contact, privacy, terms
+- Public pages: home, about, membership, apply, sponsorship, become a sponsor, blog, shop, contact, privacy, terms
 - Responsive public layout
 - Supabase schema migration with RLS policies
 - Supabase browser/server/service helpers
@@ -437,7 +437,7 @@ Implemented in this first framework:
 - Application approval with member number generation, payment email, Stripe Checkout link, manual paid fallback, and active-member conversion
 - Member list, filters, search, detail view, payment status updates, notes, and linked application view
 - Stripe membership webhook for Checkout completion, invoice success/failure, and subscription cancellation
-- News list, public news detail pages, and admin news create/edit/publish/delete workflow
+- Blog list, public blog detail pages, and admin blog create/edit/publish/delete workflow
 - Sponsor showcase page, sponsor detail pages, become-a-sponsor tier page, home page sponsor logo marquee, and sponsor admin management
 - Public contact form and admin contact ticket management
 - Placeholder posts, products, emails, settings admin pages
@@ -486,7 +486,7 @@ Resend is implemented for membership application workflow emails:
 - Applicant payment-confirmed welcome email
 - Applicant rejection email
 
-The news-update email route remains a placeholder:
+The post-update email route remains a placeholder:
 
 - `POST /api/email/send-post-update`
 
@@ -513,6 +513,6 @@ npm.cmd run typecheck
 ## Known TODOs
 
 - Add post and custom member update email sending.
-- Add member-only post access in the public news detail page.
+- Add member-only post access in the public blog detail page.
 - Add product management and shop checkout in a later phase.
 - Replace placeholder privacy, terms, waiver, and disclaimer copy before launch.

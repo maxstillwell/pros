@@ -94,12 +94,12 @@ export default async function AdminPostsPage({
     <div>
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div>
-          <p className="text-sm font-semibold uppercase text-clay">News</p>
+          <p className="text-sm font-semibold uppercase text-clay">Blog</p>
           <h1 className="mt-2 text-3xl font-semibold text-forest-900">
-            News publishing
+            Blog publishing
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-forest-900/70">
-            Create, edit and publish public news posts for the website.
+            Create, edit and publish public blog articles for the website.
           </p>
         </div>
         <Link
@@ -202,7 +202,7 @@ export default async function AdminPostsPage({
                         {post.title}
                       </p>
                       <p className="mt-1 text-xs text-forest-900/58">
-                        /news/{post.slug}
+                        /blog/{post.slug}
                       </p>
                     </td>
                     <td className="py-3 pr-4">
@@ -228,7 +228,7 @@ export default async function AdminPostsPage({
                         {post.status === "published" &&
                         post.visibility === "public" ? (
                           <Link
-                            href={`/news/${post.slug}`}
+                            href={`/blog/${post.slug}`}
                             className="font-semibold text-forest-900/68 hover:text-forest-900"
                           >
                             View

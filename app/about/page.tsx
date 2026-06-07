@@ -40,7 +40,7 @@ export default function AboutPage() {
               },
               {
                 title: "Focus",
-                body: "A maintainable club website that makes applications, news, and admin work simpler.",
+                body: "A maintainable club website that makes applications, blog publishing, and admin work simpler.",
               },
             ].map((item) => (
               <article

@@ -1,8 +1,8 @@
-import type { NewsPost } from "@/lib/news";
+import type { BlogPost } from "@/lib/blog";
 import type { PostStatus, PostVisibility } from "@/types/database";
 
 type PostFormProps = {
-  post?: NewsPost;
+  post?: BlogPost;
 };
 
 const postStatuses: PostStatus[] = ["draft", "published"];

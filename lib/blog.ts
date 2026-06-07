@@ -7,11 +7,11 @@ import {
 } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
-export type NewsPost = Database["public"]["Tables"]["posts"]["Row"];
+export type BlogPost = Database["public"]["Tables"]["posts"]["Row"];
 
 function placeholderToPost(
   post: (typeof placeholderPosts)[number],
-): NewsPost {
+): BlogPost {
   return {
     body: post.body,
     created_at: post.publishedAt,
@@ -29,7 +29,7 @@ function placeholderToPost(
 
 const fallbackPosts = placeholderPosts.map(placeholderToPost);
 
-export async function getPublicNewsPosts() {
+export async function getPublicBlogPosts() {
   if (!hasSupabaseServiceConfig()) {
     return fallbackPosts;
   }
@@ -43,13 +43,13 @@ export async function getPublicNewsPosts() {
     .order("created_at", { ascending: false });
 
   if (error || !data) {
-    return [] as NewsPost[];
+    return [] as BlogPost[];
   }
 
   return data;
 }
 
-export async function getPublicNewsPostBySlug(slug: string) {
+export async function getPublicBlogPostBySlug(slug: string) {
   if (!hasSupabaseServiceConfig()) {
     return fallbackPosts.find((post) => post.slug === slug) ?? null;
   }

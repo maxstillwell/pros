@@ -96,11 +96,11 @@ async function getPostActionContext(formData: FormData, idRequired = true) {
 
 function revalidatePostPaths(slug?: string) {
   revalidatePath("/");
-  revalidatePath("/news");
+  revalidatePath("/blog");
   revalidatePath("/admin/posts");
 
   if (slug) {
-    revalidatePath(`/news/${slug}`);
+    revalidatePath(`/blog/${slug}`);
   }
 }
 
@@ -135,7 +135,7 @@ export async function updatePost(formData: FormData) {
   revalidatePostPaths(payload.slug);
 
   if (existing?.slug && existing.slug !== payload.slug) {
-    revalidatePath(`/news/${existing.slug}`);
+    revalidatePath(`/blog/${existing.slug}`);
   }
 
   if (error) {
