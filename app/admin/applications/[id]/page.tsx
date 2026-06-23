@@ -14,6 +14,7 @@ import {
 } from "@/app/admin/applications/actions";
 import { getAdminAccess } from "@/lib/auth/profile";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { getStripeMembershipConfigStatus } from "@/lib/payments/stripe";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 type AdminApplicationDetailPageProps = {
@@ -109,6 +110,7 @@ export default async function AdminApplicationDetailPage({
     .maybeSingle();
   const canTakePaymentAction =
     application.status === "approved" && application.payment_status !== "paid";
+  const stripeConfig = getStripeMembershipConfigStatus();
 
   const detailSections: DetailSection[] = [
     {
@@ -218,6 +220,18 @@ export default async function AdminApplicationDetailPage({
       title: "Payment Details",
       rows: [
         ["Payment status", application.payment_status],
+        [
+          "Stripe checkout config",
+          stripeConfig.checkoutConfigured
+            ? `Ready (${stripeConfig.mode})`
+            : `Missing ${stripeConfig.missingCheckout.join(", ")}`,
+        ],
+        [
+          "Stripe webhook config",
+          stripeConfig.webhookConfigured
+            ? "Ready"
+            : `Missing ${stripeConfig.missingWebhook.join(", ")}`,
+        ],
         ["Checkout session", application.stripe_checkout_session_id],
         ["Latest payment status", latestPayment?.status ?? null],
         ["Latest payment amount", latestPayment ? dollarsFromCents(latestPayment.amount) : null],
@@ -404,8 +418,14 @@ export default async function AdminApplicationDetailPage({
                 </div>
               ) : (
                 <p className="mt-4 text-sm leading-6 text-forest-900/70">
-                  No Stripe payment link is stored yet. Configure Stripe or use
-                  manual paid fallback after receiving payment another way.
+                  No Stripe payment link is stored yet.{" "}
+                  {stripeConfig.checkoutConfigured
+                    ? "Use Resend Payment Email to create and send a new checkout link."
+                    : `Configure Stripe first: missing ${stripeConfig.missingCheckout.join(
+                        ", ",
+                      )}.`}
+                  {" "}You can still use manual paid fallback after receiving
+                  payment another way.
                 </p>
               )}
             </div>

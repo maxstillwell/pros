@@ -14,6 +14,7 @@ type SendEmailInput = {
     content: string;
     filename: string;
   }>;
+  replyTo?: string | null;
   relatedApplicationId?: string | null;
   relatedProfileId?: string | null;
 };
@@ -34,6 +35,10 @@ export async function sendEmail(input: SendEmailInput) {
   const to = input.to?.trim();
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
+  const replyTo =
+    input.replyTo?.trim() ||
+    process.env.REPLY_TO_EMAIL?.trim() ||
+    process.env.ADMIN_EMAIL?.trim();
   const baseLog = {
     recipient_email: to ?? null,
     audience: to ?? null,
@@ -74,6 +79,7 @@ export async function sendEmail(input: SendEmailInput) {
         to,
         subject: input.subject,
         text: input.text,
+        reply_to: replyTo || undefined,
         attachments: input.attachments?.length ? input.attachments : undefined,
       }),
     });

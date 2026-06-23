@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { sendAdminContactTicketEmail } from "@/lib/email/contact-emails";
 import {
   createSupabaseServiceClient,
   hasSupabaseServiceConfig,
@@ -51,7 +52,7 @@ export async function submitContactTicket(formData: FormData) {
     redirect(`/contact?topic=${returnTopic}&error=config`);
   }
 
-  const { error } = await createSupabaseServiceClient()
+  const { data: ticket, error } = await createSupabaseServiceClient()
     .from("contact_tickets")
     .insert({
       email,
@@ -61,13 +62,26 @@ export async function submitContactTicket(formData: FormData) {
       source_path: sourcePath,
       subject,
       topic,
-    });
+    })
+    .select("id")
+    .single();
 
   revalidatePath("/admin/contact");
 
-  if (error) {
+  if (error || !ticket) {
     redirect(`/contact?topic=${returnTopic}&error=1`);
   }
+
+  await sendAdminContactTicketEmail({
+    email,
+    message,
+    name,
+    phone,
+    sourcePath,
+    subject,
+    ticketId: ticket.id,
+    topic,
+  });
 
   redirect(`/contact?topic=${returnTopic}&submitted=1`);
 }

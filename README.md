@@ -40,6 +40,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
 ADMIN_EMAIL=
+REPLY_TO_EMAIL=
 ADMIN_PASSWORD=
 ADMIN_SESSION_SECRET=
 
@@ -155,6 +156,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
 
 ADMIN_EMAIL=YOUR_ADMIN_EMAIL
+REPLY_TO_EMAIL=YOUR_PROS_GMAIL_ADDRESS
 ADMIN_PASSWORD=YOUR_STRONG_ADMIN_PASSWORD
 ADMIN_SESSION_SECRET=YOUR_LONG_RANDOM_SECRET
 
@@ -178,6 +180,17 @@ services are ready. Resend is used for application emails when configured.
 Stripe is used for approved membership payment links when configured. If Stripe
 is not configured yet, admins can still approve applications and mark payment as
 paid manually.
+
+For the PROS Gmail mailbox, set:
+
+```env
+ADMIN_EMAIL=pros.org.au@gmail.com
+REPLY_TO_EMAIL=pros.org.au@gmail.com
+```
+
+`ADMIN_EMAIL` receives admin notifications. `REPLY_TO_EMAIL` is added to
+outgoing emails so applicant replies and contact-ticket replies go back to the
+PROS Gmail inbox. `RESEND_FROM_EMAIL` must still be a Resend-verified sender.
 
 ### Supabase
 
@@ -407,14 +420,15 @@ Application emails use Resend when these variables are configured:
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
 ADMIN_EMAIL=
+REPLY_TO_EMAIL=
 ADMIN_PASSWORD=
 ADMIN_SESSION_SECRET=
 NEXT_PUBLIC_SITE_URL=
 ```
 
 Email attempts are logged in `email_logs`. If Resend is not configured or email
-sending fails, the application or review action still completes and the email
-log records `skipped` or `failed`.
+sending fails, the application, ticket, or review action still completes and the
+email log records `skipped` or `failed`.
 
 ### Current limitations
 
@@ -449,6 +463,22 @@ Membership payment links are implemented through Stripe Checkout. Create a
 membership Product and recurring or one-time Price in Stripe, then add the Price
 ID to `STRIPE_MEMBERSHIP_PRICE_ID`.
 
+Recommended first setup:
+
+1. Create a Stripe Product named `PROS Annual Membership`.
+2. Create a one-time AUD Price for the annual membership fee.
+3. Copy that Price ID into `STRIPE_MEMBERSHIP_PRICE_ID`.
+4. Set `STRIPE_MEMBERSHIP_MODE=payment`.
+5. Add `STRIPE_SECRET_KEY`, `STRIPE_MEMBERSHIP_PRICE_ID`, and
+   `STRIPE_WEBHOOK_SECRET` in Vercel.
+6. Redeploy after changing Vercel environment variables.
+
+When an admin approves an application, the app creates or updates the member
+profile, generates the member number, creates a Stripe Checkout session, stores
+the checkout URL, and emails the applicant. When Stripe sends the webhook after
+successful payment, the app marks the application and member as `paid`, activates
+membership, stores Stripe IDs, and sends the welcome email.
+
 The implemented membership routes are:
 
 - `POST /api/stripe/create-membership-checkout-session`
@@ -481,6 +511,7 @@ Resend is implemented for membership application workflow emails:
 
 - Applicant confirmation email after application submission
 - Admin notification email after application submission
+- Admin notification email after contact-ticket submission
 - Applicant approval and payment-link email
 - Applicant payment-link resend email
 - Applicant payment-confirmed welcome email

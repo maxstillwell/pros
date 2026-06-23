@@ -15,6 +15,27 @@ export type StripeCheckoutResult = {
   url: string | null;
 };
 
+export function getStripeMembershipConfigStatus() {
+  const missingCheckout = [
+    ["NEXT_PUBLIC_SITE_URL", process.env.NEXT_PUBLIC_SITE_URL],
+    ["STRIPE_SECRET_KEY", process.env.STRIPE_SECRET_KEY],
+    ["STRIPE_MEMBERSHIP_PRICE_ID", process.env.STRIPE_MEMBERSHIP_PRICE_ID],
+  ]
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
+  const missingWebhook = [["STRIPE_WEBHOOK_SECRET", process.env.STRIPE_WEBHOOK_SECRET]]
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
+
+  return {
+    checkoutConfigured: missingCheckout.length === 0,
+    missingCheckout,
+    missingWebhook,
+    mode: process.env.STRIPE_MEMBERSHIP_MODE || "payment",
+    webhookConfigured: missingWebhook.length === 0,
+  };
+}
+
 export async function createMembershipCheckoutSession({
   applicationId,
   email,
@@ -29,19 +50,39 @@ export async function createMembershipCheckoutSession({
   }
 
   const siteUrl = getSiteUrl().replace(/\/$/, "");
+  const mode = process.env.STRIPE_MEMBERSHIP_MODE || "payment";
+  const metadata = {
+    application_id: applicationId,
+    email,
+    member_number: memberNumber,
+    payment_type: "membership",
+    profile_id: profileId,
+  };
   const body = new URLSearchParams({
-    mode: process.env.STRIPE_MEMBERSHIP_MODE || "payment",
+    mode,
     "line_items[0][price]": priceId,
     "line_items[0][quantity]": "1",
+    client_reference_id: `${applicationId}:${profileId}`,
     customer_email: email,
     success_url: `${siteUrl}/membership/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/membership/cancelled`,
-    "metadata[application_id]": applicationId,
-    "metadata[profile_id]": profileId,
-    "metadata[member_number]": memberNumber,
-    "metadata[email]": email,
-    "metadata[payment_type]": "membership",
   });
+
+  Object.entries(metadata).forEach(([key, value]) => {
+    body.set(`metadata[${key}]`, value);
+
+    if (mode === "subscription") {
+      body.set(`subscription_data[metadata][${key}]`, value);
+    }
+
+    if (mode === "payment") {
+      body.set(`payment_intent_data[metadata][${key}]`, value);
+    }
+  });
+
+  if (mode === "payment") {
+    body.set("customer_creation", "always");
+  }
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",

@@ -222,6 +222,20 @@ async function handleCheckoutCompleted(
     return;
   }
 
+  if (
+    session.payment_status &&
+    !["paid", "no_payment_required"].includes(session.payment_status)
+  ) {
+    await updateMembershipPaymentStatus(supabase, {
+      application,
+      profile,
+      sessionId: session.id,
+      status: "pending_payment",
+      subscriptionId: stripeId(session.subscription),
+    });
+    return;
+  }
+
   await activateMembershipPayment(supabase, {
     amount: session.amount_total ?? null,
     application: memberNumber

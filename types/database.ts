@@ -29,6 +29,7 @@ export type EmailType =
   | "application_approved_payment_required"
   | "payment_confirmed_welcome"
   | "application_rejected"
+  | "admin_contact_ticket"
   | "payment_link_resent"
   | "member_update";
 
