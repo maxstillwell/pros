@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { HeroSlideshow } from "@/components/home/hero-slideshow";
 import { SiteShell } from "@/components/layout/site-shell";
 import { SponsorLogoMarquee } from "@/components/sponsors/sponsor-logo-marquee";
 import { membershipSteps } from "@/lib/site-content";
@@ -15,6 +16,21 @@ const societyFocus = [
   "Member Community",
 ];
 
+const heroSlides = [
+  {
+    src: "/images/pros-hero-rain-camp.png",
+    alt: "Rainy PROS field camp with a four-wheel drive and campfire",
+  },
+  {
+    src: "/images/pros-hero-family-campfire.png",
+    alt: "Family-friendly PROS campfire scene at sunset",
+  },
+  {
+    src: "/images/pros-hero.png",
+    alt: "Open bushland and distant range at golden hour",
+  },
+];
+
 export default async function HomePage() {
   const featuredSponsors = await getSponsors({ featuredOnly: true });
 
@@ -22,15 +38,7 @@ export default async function HomePage() {
     <SiteShell>
       <main>
         <section className="relative flex min-h-[72svh] items-center overflow-hidden bg-forest-900 text-white">
-          <Image
-            src="/images/pros-hero.png"
-            alt="Open bushland and distant range at golden hour"
-            fill
-            priority
-            unoptimized
-            sizes="100vw"
-            className="object-cover"
-          />
+          <HeroSlideshow slides={heroSlides} />
           <div className="absolute inset-0 bg-forest-900/58" />
           <div className="relative mx-auto w-full max-w-6xl px-5 py-20">
             <p className="text-sm font-semibold uppercase text-stone/85">
