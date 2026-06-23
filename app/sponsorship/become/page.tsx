@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
 import { benefitsList, getSponsorshipTiers } from "@/lib/sponsors";
@@ -23,18 +22,6 @@ export default async function BecomeSponsorPage() {
             align with safety, lawful outdoor recreation, conservation,
             fellowship and practical member development.
           </p>
-
-          <div className="mt-10 overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
-            <Image
-              src="/images/pros-sponsor-showcase.jpg"
-              alt="Sponsor display setup for an outdoor community event"
-              width={1600}
-              height={914}
-              unoptimized
-              className="aspect-[16/7] w-full object-cover"
-            />
-          </div>
-
           <section className="mt-12 grid gap-5 lg:grid-cols-3">
             {tiers.map((tier) => (
               <article

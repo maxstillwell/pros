@@ -6,7 +6,7 @@ import { getSiteUrl } from "@/lib/supabase/env";
 type CheckoutInput = {
   applicationId: string;
   email: string;
-  memberNumber: string;
+  memberNumber?: string | null;
   profileId: string;
 };
 
@@ -51,13 +51,16 @@ export async function createMembershipCheckoutSession({
 
   const siteUrl = getSiteUrl().replace(/\/$/, "");
   const mode = process.env.STRIPE_MEMBERSHIP_MODE || "payment";
-  const metadata = {
+  const metadata: Record<string, string> = {
     application_id: applicationId,
     email,
-    member_number: memberNumber,
     payment_type: "membership",
     profile_id: profileId,
   };
+
+  if (memberNumber) {
+    metadata.member_number = memberNumber;
+  }
   const body = new URLSearchParams({
     mode,
     "line_items[0][price]": priceId,

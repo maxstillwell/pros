@@ -307,8 +307,8 @@ http://localhost:3000/admin/contact
 5. Review applicant details, emergency contact, interests, acknowledgements, waiver, consent, and signature.
 6. Approve or reject the application.
 7. Approved applications create or update a member profile with status `approved`.
-8. Approved applications receive a generated member number like `PROS-001`.
-9. If Stripe is configured, approval creates a Checkout link and sends the payment email.
+8. If Stripe is configured, approval creates a Checkout link and sends the payment email.
+9. Member numbers like `PROS-001` are issued only after Stripe confirms payment or an admin uses `Mark Payment Manually Paid`.
 10. If payment is received outside Stripe, use `Mark Payment Manually Paid`.
 11. Use `Download PDF` to download the submitted application PDF.
 12. Use `Delete Application` only for mistaken or duplicate application records.
@@ -448,7 +448,7 @@ Implemented in this first framework:
 - Zod-validated membership application form
 - Admin dashboard shell
 - Applications list, filters, search, detail view, notes, approve, and reject actions
-- Application approval with member number generation, payment email, Stripe Checkout link, manual paid fallback, and active-member conversion
+- Application approval with payment email, Stripe Checkout link, member number assignment after payment, manual paid fallback, and active-member conversion
 - Member list, filters, search, detail view, payment status updates, notes, and linked application view
 - Stripe membership webhook for Checkout completion, invoice success/failure, and subscription cancellation
 - Blog list, public blog detail pages, and admin blog create/edit/publish/delete workflow
@@ -474,10 +474,11 @@ Recommended first setup:
 6. Redeploy after changing Vercel environment variables.
 
 When an admin approves an application, the app creates or updates the member
-profile, generates the member number, creates a Stripe Checkout session, stores
-the checkout URL, and emails the applicant. When Stripe sends the webhook after
-successful payment, the app marks the application and member as `paid`, activates
-membership, stores Stripe IDs, and sends the welcome email.
+profile, creates a Stripe Checkout session, stores the checkout URL, and emails
+the applicant. When Stripe sends the webhook after successful payment, the app
+assigns or preserves the permanent member number, marks the application and
+member as `paid`, activates membership, stores Stripe IDs, and sends the welcome
+email.
 
 The implemented membership routes are:
 

@@ -149,7 +149,10 @@ export default async function AdminDashboardPage() {
               Approved applicants move into the Members area with status
               Approved.
             </li>
-            <li>After payment is confirmed, update the member to Active.</li>
+            <li>
+              Stripe payment confirmation or manual paid fallback activates the
+              member and issues the permanent member number.
+            </li>
           </ol>
         </div>
       </div>

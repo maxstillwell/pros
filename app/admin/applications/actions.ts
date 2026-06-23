@@ -11,7 +11,6 @@ import {
 import {
   activateMembershipPayment,
   createApprovalCheckout,
-  generateMemberNumber,
 } from "@/lib/membership/workflow";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import type { ApplicationStatus } from "@/types/database";
@@ -84,8 +83,7 @@ export async function approveApplication(formData: FormData) {
     .select("*")
     .eq("email", application.email)
     .maybeSingle();
-  const memberNumber =
-    existingProfile?.member_number ?? (await generateMemberNumber(supabase));
+  const memberNumber = existingProfile?.member_number ?? application.member_number;
 
   const profileWrite = existingProfile
     ? await supabase
@@ -166,7 +164,6 @@ export async function approveApplication(formData: FormData) {
     applicationId: application.id,
     email: application.email,
     fullName: application.full_name,
-    memberNumber,
     paymentLink: checkout?.url ?? null,
     profileId: profile.id,
   });
@@ -215,10 +212,7 @@ async function getApprovedPaymentContext(formData: FormData) {
 export async function resendPaymentEmail(formData: FormData) {
   const { application, profile, supabase } =
     await getApprovedPaymentContext(formData);
-  const memberNumber =
-    profile.member_number ??
-    application.member_number ??
-    (await generateMemberNumber(supabase));
+  const memberNumber = profile.member_number ?? application.member_number;
   let paymentLink = application.stripe_payment_link;
   let checkoutSessionId = application.stripe_checkout_session_id;
 
@@ -270,7 +264,6 @@ export async function resendPaymentEmail(formData: FormData) {
     applicationId: application.id,
     email: application.email,
     fullName: application.full_name,
-    memberNumber,
     paymentLink,
     profileId: profile.id,
   });

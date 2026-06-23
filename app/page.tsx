@@ -71,8 +71,9 @@ export default async function HomePage() {
               </h2>
               <p className="mt-5 text-base leading-7 text-forest-900/72">
                 Membership is by application and committee review. Approved
-                applicants receive a secure payment link for the annual fee
-                after review.
+                applicants receive a secure payment link for PROS Membership
+                Application $200 + First Year Annual Fee $100 after review.
+                Member numbers are issued after payment is confirmed.
               </p>
               <div className="mt-7 overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
                 <Image
@@ -125,7 +126,7 @@ export default async function HomePage() {
 
         <section className="bg-stone px-5 py-16">
           <div className="mx-auto max-w-6xl">
-            <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
+            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
               <div>
                 <p className="text-sm font-semibold uppercase text-clay">
                   Sponsorship
@@ -139,31 +140,19 @@ export default async function HomePage() {
                   outdoor recreation.
                 </p>
               </div>
-              <div>
-                <div className="overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
-                  <Image
-                    src="/images/pros-sponsor-showcase.jpg"
-                    alt="Sponsor showcase display at an outdoor field-day"
-                    width={1600}
-                    height={914}
-                    unoptimized
-                    className="aspect-[16/9] w-full object-cover"
-                  />
-                </div>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <Link
-                    href="/sponsorship"
-                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-white"
-                  >
-                    View Sponsorship
-                  </Link>
-                  <Link
-                    href="/sponsorship/become"
-                    className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
-                  >
-                    Become a Sponsor
-                  </Link>
-                </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/sponsorship"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-white"
+                >
+                  View Sponsorship
+                </Link>
+                <Link
+                  href="/sponsorship/become"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
+                >
+                  Become a Sponsor
+                </Link>
               </div>
             </div>
           </div>

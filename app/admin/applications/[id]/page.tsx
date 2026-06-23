@@ -317,9 +317,10 @@ export default async function AdminApplicationDetailPage({
               Review actions
             </h2>
             <p className="mt-3 text-sm leading-6 text-forest-900/70">
-              Approval creates or updates a member profile, assigns a member
-              number, creates a Stripe checkout link when configured, and sends
-              the payment email.
+              Approval creates or updates a member profile, creates a Stripe
+              checkout link when configured, and sends the payment email. The
+              permanent member number is issued after Stripe payment
+              confirmation or manual paid fallback.
             </p>
 
             <form className="mt-6 grid gap-4">

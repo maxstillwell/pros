@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
 import { SponsorCard } from "@/components/sponsors/sponsor-card";
@@ -11,7 +10,7 @@ export default async function SponsorshipPage() {
   return (
     <SiteShell>
       <main className="px-5 py-16">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div className="mx-auto max-w-6xl">
           <div>
             <p className="text-sm font-semibold uppercase text-clay">
               Sponsorship
@@ -39,17 +38,6 @@ export default async function SponsorshipPage() {
                 Contact Us
               </Link>
             </div>
-          </div>
-
-          <div className="overflow-hidden rounded-md border border-forest-900/10 bg-forest-900 shadow-sm">
-            <Image
-              src="/images/pros-sponsor-showcase.jpg"
-              alt="Outdoor sponsor display table at a field-day"
-              width={1600}
-              height={914}
-              unoptimized
-              className="aspect-[16/10] w-full object-cover"
-            />
           </div>
         </div>
 

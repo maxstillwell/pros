@@ -7,6 +7,10 @@ import {
   getApplicationPdfFilename,
 } from "@/lib/pdf/application-pdf";
 import {
+  membershipFeeSummary,
+  membershipPricing,
+} from "@/lib/membership/pricing";
+import {
   formatMelbourneDate,
   formatMelbourneDateTime,
 } from "@/lib/time";
@@ -27,7 +31,6 @@ type ApplicationPdfEmailInput = ApplicationEmailInput & {
 };
 
 type PaymentEmailInput = ApplicationEmailInput & {
-  memberNumber: string;
   paymentLink?: string | null;
 };
 
@@ -73,7 +76,7 @@ Thank you for submitting your membership application to Prime Range Outdoor Soci
 
 Your application has been received and will be reviewed by the committee.
 
-Your member reference number will be confirmed if your application is approved.
+Your member number will be confirmed after committee approval and successful payment.
 
 A PDF copy of your submitted application is attached for your records.
 
@@ -118,7 +121,6 @@ export async function sendApplicationApprovedEmail({
   applicationId,
   fullName,
   email,
-  memberNumber,
   paymentLink,
   profileId,
 }: PaymentEmailInput) {
@@ -132,13 +134,15 @@ export async function sendApplicationApprovedEmail({
 
 Your membership application has been approved by the committee.
 
-Your member number is: ${memberNumber}
-
 The next step is to complete your annual membership fee payment using the secure payment link below:
 
 ${paymentLink ?? "Payment link is not available yet. The committee will contact you with payment instructions."}
 
-Your membership will become active once payment has been confirmed.
+Your member number will be issued in your welcome email after payment has been confirmed.
+
+Payment summary: ${membershipFeeSummary}.
+
+For limited time only, new approved members who complete payment will receive a ${membershipPricing.welcomeGiftName} as a welcome gift. Valued at ${membershipPricing.welcomeGiftValue}.
 
 Regards,
 
@@ -157,9 +161,11 @@ export async function sendPaymentLinkResentEmail(input: PaymentEmailInput) {
 
 Your PROS membership payment link is below.
 
-Member number: ${input.memberNumber}
-
 ${input.paymentLink ?? "Payment link is not available yet. The committee will contact you with payment instructions."}
+
+Your member number will be issued in your welcome email after payment has been confirmed.
+
+Payment summary: ${membershipFeeSummary}.
 
 Regards,
 

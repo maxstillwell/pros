@@ -1,7 +1,6 @@
 import { getAdminAccess } from "@/lib/auth/profile";
 import {
   createApprovalCheckout,
-  generateMemberNumber,
 } from "@/lib/membership/workflow";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
@@ -49,8 +48,7 @@ export async function POST(request: Request) {
   const existingProfile = profileByApplication ?? profileByEmail;
   const memberNumber =
     existingProfile?.member_number ??
-    application.member_number ??
-    (await generateMemberNumber(supabase));
+    application.member_number;
 
   const profileWrite = existingProfile
     ? await supabase

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
+import { membershipPricing } from "@/lib/membership/pricing";
 import { membershipBenefits, membershipSteps } from "@/lib/site-content";
 
 export default function MembershipPage() {
@@ -63,6 +64,50 @@ export default function MembershipPage() {
             />
           </div>
         </div>
+
+        <section className="mx-auto mt-16 max-w-6xl">
+          <div className="grid overflow-hidden rounded-md border border-forest-900/10 bg-white shadow-sm lg:grid-cols-[0.85fr_1.15fr]">
+            <div className="p-6 md:p-8">
+              <p className="text-sm font-semibold uppercase text-clay">
+                Membership fees
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold text-forest-900">
+                Initial approved-member payment:{" "}
+                {membershipPricing.totalInitialPayment}.
+              </h2>
+              <div className="mt-6 divide-y divide-forest-900/10 border-y border-forest-900/10 text-base text-forest-900">
+                <div className="flex items-center justify-between gap-4 py-4">
+                  <span>PROS Membership Application</span>
+                  <strong>{membershipPricing.applicationFee}</strong>
+                </div>
+                <div className="flex items-center justify-between gap-4 py-4">
+                  <span>First Year Annual Fee</span>
+                  <strong>{membershipPricing.firstYearAnnualFee}</strong>
+                </div>
+              </div>
+              <p className="mt-5 text-sm leading-6 text-forest-900/70">
+                Payment is requested only after committee approval. Your
+                permanent member number is issued after payment is confirmed and
+                remains attached to your membership record for future renewals.
+              </p>
+              <p className="mt-5 border-t border-forest-900/10 pt-5 text-base font-semibold leading-7 text-forest-900">
+                For limited time only, new approved members who complete payment
+                will receive a {membershipPricing.welcomeGiftName} as a welcome
+                gift. Valued at {membershipPricing.welcomeGiftValue}.
+              </p>
+            </div>
+            <div className="bg-forest-50 p-4">
+              <Image
+                src="/images/pros-aluminum-case.png"
+                alt="PROS Designed Aluminum Hard Case welcome gift"
+                width={1600}
+                height={1024}
+                unoptimized
+                className="h-full min-h-[18rem] w-full rounded-sm object-contain"
+              />
+            </div>
+          </div>
+        </section>
 
         <section className="mx-auto mt-16 max-w-6xl">
           <div className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm md:p-8">

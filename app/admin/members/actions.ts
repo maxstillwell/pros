@@ -227,10 +227,7 @@ export async function resendMemberPaymentEmail(formData: FormData) {
     redirect(`${returnTo}?error=no-application`);
   }
 
-  const memberNumber =
-    member.member_number ??
-    application.member_number ??
-    (await generateMemberNumber(supabase));
+  const memberNumber = member.member_number ?? application.member_number;
   const checkout = await createApprovalCheckout({
     application,
     memberNumber,
@@ -275,7 +272,6 @@ export async function resendMemberPaymentEmail(formData: FormData) {
     applicationId: application.id,
     email: member.email,
     fullName: member.full_name ?? application.full_name,
-    memberNumber,
     paymentLink: checkout?.url ?? application.stripe_payment_link,
     profileId: member.id,
   });

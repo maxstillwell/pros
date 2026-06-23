@@ -1,8 +1,8 @@
 export const membershipSteps = [
   "Submit your application with contact details, emergency contact, interests and required acknowledgements.",
   "The committee reviews the application against PROS values, safety expectations and membership suitability.",
-  "Approved applicants receive a secure annual membership fee payment link.",
-  "Once payment is confirmed, the administrator links the application to a member record and activates membership.",
+  "Approved applicants receive a secure payment link for the PROS Membership Application $200 + First Year Annual Fee $100.",
+  "Once payment is confirmed, the system assigns a permanent member number, links the application to a member record and activates membership.",
   "Active members can receive member updates, club communications and eligibility for member-only activities.",
 ];
 

@@ -39,7 +39,7 @@ export async function createApprovalCheckout({
   profile,
 }: {
   application: ApplicationRow;
-  memberNumber: string;
+  memberNumber?: string | null;
   profile: ProfileRow;
 }) {
   try {
