@@ -1,5 +1,6 @@
 "use server";
 
+import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getAdminAccess } from "@/lib/auth/profile";
@@ -49,6 +50,27 @@ function readAmountCents(formData: FormData) {
 
   const amount = Number(value.replaceAll(",", ""));
   return Number.isFinite(amount) ? Math.round(amount * 100) : null;
+}
+
+function readNullableDate(formData: FormData, key: string) {
+  const value = readString(formData, key);
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+}
+
+function melbourneDatePart() {
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Australia/Melbourne",
+    year: "numeric",
+  }).formatToParts(new Date());
+  const byType = new Map(parts.map((part) => [part.type, part.value]));
+
+  return `${byType.get("year")}${byType.get("month")}${byType.get("day")}`;
+}
+
+function generateInvoiceNumber() {
+  return `INV-${melbourneDatePart()}-${randomInt(1000, 10000)}`;
 }
 
 function slugify(value: string) {
@@ -131,6 +153,32 @@ function tierPayload(formData: FormData) {
     price_label: priceLabel,
     slug,
     sort_order: readSortOrder(formData),
+  };
+}
+
+function sponsorInvoicePayload(formData: FormData, invoiceNumber: string) {
+  const amount = readAmountCents(formData);
+  const billToName = readString(formData, "bill_to_name");
+  const description = readString(formData, "description");
+  const sponsorId = readNullableString(formData, "sponsor_id");
+
+  if (!sponsorId || !billToName || !description || amount === null || amount <= 0) {
+    redirect("/admin/sponsors?error=invoice-required#sponsor-invoices");
+  }
+
+  return {
+    amount,
+    bill_to_address: readNullableString(formData, "bill_to_address"),
+    bill_to_email: readNullableString(formData, "bill_to_email"),
+    bill_to_name: billToName,
+    currency: "aud",
+    description,
+    due_at: readNullableDate(formData, "due_at"),
+    invoice_number: invoiceNumber,
+    issued_at: readNullableDate(formData, "issued_at") ?? undefined,
+    notes: readNullableString(formData, "notes"),
+    sponsor_id: sponsorId,
+    status: "issued" as const,
   };
 }
 
@@ -220,6 +268,55 @@ export async function deleteSponsor(formData: FormData) {
   }
 
   redirect("/admin/sponsors?saved=sponsor-deleted");
+}
+
+export async function createSponsorInvoice(formData: FormData) {
+  const { supabase } = await getSponsorActionContext(formData, false);
+  const providedInvoiceNumber = readString(formData, "invoice_number");
+  let lastError = false;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const invoiceNumber =
+      attempt === 0 && providedInvoiceNumber
+        ? providedInvoiceNumber
+        : generateInvoiceNumber();
+    const payload = sponsorInvoicePayload(formData, invoiceNumber);
+    const { data, error } = await supabase
+      .from("sponsor_invoices")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (!error && data?.id) {
+      revalidatePath("/admin/sponsors");
+      redirect(
+        `/admin/sponsors?saved=invoice-created&invoice=${data.id}#sponsor-invoices`,
+      );
+    }
+
+    lastError = true;
+
+    if (providedInvoiceNumber || error?.code !== "23505") {
+      break;
+    }
+  }
+
+  if (lastError) {
+    redirect("/admin/sponsors?error=invoice-create#sponsor-invoices");
+  }
+}
+
+export async function deleteSponsorInvoice(formData: FormData) {
+  const { id, supabase } = await getSponsorActionContext(formData);
+  const { error } = await supabase.from("sponsor_invoices").delete().eq("id", id);
+
+  revalidatePath("/admin/sponsors");
+
+  if (error) {
+    redirect("/admin/sponsors?error=invoice-delete#sponsor-invoices");
+  }
+
+  redirect("/admin/sponsors?saved=invoice-deleted#sponsor-invoices");
 }
 
 export async function updateSponsorshipTier(formData: FormData) {

@@ -2,16 +2,20 @@ import Link from "next/link";
 import { AdminAccessNotice } from "@/components/admin/admin-access-notice";
 import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
 import {
+  createSponsorInvoice,
   createSponsor,
+  deleteSponsorInvoice,
   deleteSponsor,
   updateSponsor,
   updateSponsorshipTier,
 } from "@/app/admin/sponsors/actions";
 import { getAdminAccess } from "@/lib/auth/profile";
-import { formatDateTime } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import {
+  getSponsorInvoices,
   getSponsors,
   getSponsorshipTiers,
+  type SponsorInvoice,
   type SponsorWithTier,
   type SponsorshipTier,
 } from "@/lib/sponsors";
@@ -20,6 +24,7 @@ type AdminSponsorsPageProps = {
   searchParams: Promise<{
     saved?: string;
     error?: string;
+    invoice?: string;
   }>;
 };
 
@@ -37,6 +42,47 @@ const dangerButtonClass =
 
 function dollarsValue(amount: number | null) {
   return amount === null ? "" : String(amount / 100);
+}
+
+function moneyValue(amount: number, currency = "aud") {
+  return `${currency.toUpperCase()} ${(amount / 100).toLocaleString("en-AU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function melbourneDateInput(offsetDays = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  const parts = new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Australia/Melbourne",
+    year: "numeric",
+  }).formatToParts(date);
+  const byType = new Map(parts.map((part) => [part.type, part.value]));
+
+  return `${byType.get("year")}-${byType.get("month")}-${byType.get("day")}`;
+}
+
+function savedMessage(value: string) {
+  if (value.startsWith("invoice")) {
+    return "Sponsor invoice saved.";
+  }
+
+  return "Sponsor update saved.";
+}
+
+function errorMessage(value: string) {
+  const messages: Record<string, string> = {
+    "invoice-create":
+      "Sponsor invoice could not be created. Check the database table has been added.",
+    "invoice-delete": "Sponsor invoice could not be deleted.",
+    "invoice-required":
+      "Sponsor invoice needs a sponsor, bill-to name, description and amount.",
+  };
+
+  return messages[value] ?? "Sponsor update failed.";
 }
 
 function isStoredImage(value: string | null | undefined) {
@@ -219,6 +265,199 @@ function SponsorFields({
   );
 }
 
+function SponsorInvoiceForm({ sponsor }: { sponsor: SponsorWithTier }) {
+  const defaultDescription = `${sponsor.tier?.name ?? "Sponsor"} sponsorship for Prime Range Outdoor Society Inc.`;
+
+  return (
+    <section className="mt-6 rounded-md border border-forest-900/10 bg-forest-50 p-5">
+      <div>
+        <p className="text-sm font-semibold uppercase text-clay">Invoice</p>
+        <h4 className="mt-1 text-lg font-semibold text-forest-900">
+          Create sponsor invoice
+        </h4>
+        <p className="mt-2 text-sm leading-6 text-forest-900/70">
+          Creates a downloadable PDF invoice. PROS ABN and no-GST wording are
+          included automatically.
+        </p>
+      </div>
+      <form className="mt-5">
+        <input type="hidden" name="sponsor_id" value={sponsor.id} />
+        <div className="grid gap-5 md:grid-cols-2">
+          <label className={labelClass}>
+            Bill to
+            <input
+              name="bill_to_name"
+              defaultValue={sponsor.name}
+              required
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Billing email
+            <input
+              name="bill_to_email"
+              type="email"
+              defaultValue={sponsor.contact_email ?? ""}
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Invoice number
+            <input
+              name="invoice_number"
+              placeholder="Leave blank to auto-generate"
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Amount in dollars
+            <input
+              name="amount_dollars"
+              type="number"
+              min="0.01"
+              step="0.01"
+              defaultValue={dollarsValue(sponsor.tier?.amount ?? null)}
+              required
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Issue date
+            <input
+              name="issued_at"
+              type="date"
+              defaultValue={melbourneDateInput()}
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Due date
+            <input
+              name="due_at"
+              type="date"
+              defaultValue={melbourneDateInput(7)}
+              className={inputClass}
+            />
+          </label>
+          <label className={`${labelClass} md:col-span-2`}>
+            Billing address
+            <textarea
+              name="bill_to_address"
+              rows={3}
+              placeholder="Optional sponsor billing address"
+              className={textareaClass}
+            />
+          </label>
+          <label className={`${labelClass} md:col-span-2`}>
+            Description
+            <textarea
+              name="description"
+              rows={3}
+              defaultValue={defaultDescription}
+              required
+              className={textareaClass}
+            />
+          </label>
+          <label className={`${labelClass} md:col-span-2`}>
+            Payment notes
+            <textarea
+              name="notes"
+              rows={4}
+              placeholder="Add bank transfer details or payment instructions here. The invoice number should be used as the payment reference."
+              className={textareaClass}
+            />
+          </label>
+        </div>
+        <button formAction={createSponsorInvoice} className={`${primaryButtonClass} mt-5`}>
+          Create Invoice
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function SponsorInvoiceList({ invoices }: { invoices: SponsorInvoice[] }) {
+  return (
+    <section
+      id="sponsor-invoices"
+      className="mt-10 rounded-md border border-forest-900/10 bg-white p-6 shadow-sm"
+    >
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div>
+          <p className="text-sm font-semibold uppercase text-clay">
+            Sponsor invoices
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-forest-900">
+            Download invoice PDFs
+          </h2>
+        </div>
+      </div>
+
+      {invoices.length ? (
+        <div className="mt-5 overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-forest-900/10 text-xs uppercase text-forest-900/58">
+              <tr>
+                <th className="py-3 pr-4 font-semibold">Invoice</th>
+                <th className="py-3 pr-4 font-semibold">Bill to</th>
+                <th className="py-3 pr-4 font-semibold">Issued</th>
+                <th className="py-3 pr-4 font-semibold">Amount</th>
+                <th className="py-3 pr-4 font-semibold">Status</th>
+                <th className="py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-forest-900/10">
+              {invoices.map((invoice) => (
+                <tr key={invoice.id}>
+                  <td className="py-4 pr-4 font-semibold text-forest-900">
+                    {invoice.invoice_number}
+                  </td>
+                  <td className="py-4 pr-4 text-forest-900/70">
+                    {invoice.bill_to_name}
+                  </td>
+                  <td className="py-4 pr-4 text-forest-900/70">
+                    {formatDate(invoice.issued_at)}
+                  </td>
+                  <td className="py-4 pr-4 text-forest-900/70">
+                    {moneyValue(invoice.amount, invoice.currency)}
+                  </td>
+                  <td className="py-4 pr-4 text-forest-900/70">
+                    {invoice.status}
+                  </td>
+                  <td className="py-4">
+                    <div className="flex flex-wrap gap-2">
+                      <a
+                        href={`/admin/sponsors/invoices/${invoice.id}/pdf`}
+                        className={secondaryButtonClass}
+                      >
+                        Download PDF
+                      </a>
+                      <form>
+                        <input type="hidden" name="id" value={invoice.id} />
+                        <ConfirmSubmitButton
+                          formAction={deleteSponsorInvoice}
+                          message="Delete this invoice permanently?"
+                          className={dangerButtonClass}
+                        >
+                          Delete
+                        </ConfirmSubmitButton>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-5 text-sm leading-6 text-forest-900/70">
+          No sponsor invoices have been created yet.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function TierFields({ tier }: { tier: SponsorshipTier }) {
   return (
     <div className="grid gap-5 md:grid-cols-2">
@@ -316,10 +555,14 @@ export default async function AdminSponsorsPage({
   }
 
   const params = await searchParams;
-  const [sponsors, tiers] = await Promise.all([
+  const [sponsors, tiers, invoices] = await Promise.all([
     getSponsors({ includeInactive: true }),
     getSponsorshipTiers({ includeInactive: true }),
+    getSponsorInvoices(),
   ]);
+  const newInvoiceHref = params.invoice
+    ? `/admin/sponsors/invoices/${params.invoice}/pdf`
+    : null;
 
   return (
     <div>
@@ -336,13 +579,21 @@ export default async function AdminSponsorsPage({
 
       {params.saved ? (
         <div className="mt-6 rounded-md border border-forest-700/20 bg-white p-4 text-sm font-medium text-forest-900">
-          Sponsor update saved.
+          {savedMessage(params.saved)}
+          {newInvoiceHref ? (
+            <a
+              href={newInvoiceHref}
+              className="ml-3 font-semibold text-clay hover:text-forest-900"
+            >
+              Download new invoice PDF
+            </a>
+          ) : null}
         </div>
       ) : null}
 
       {params.error ? (
         <div className="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
-          Sponsor update failed.
+          {errorMessage(params.error)}
         </div>
       ) : null}
 
@@ -425,6 +676,8 @@ export default async function AdminSponsorsPage({
                     Delete Sponsor
                   </ConfirmSubmitButton>
                 </form>
+
+                <SponsorInvoiceForm sponsor={sponsor} />
               </article>
             ))
           ) : (
@@ -436,6 +689,8 @@ export default async function AdminSponsorsPage({
           )}
         </div>
       </section>
+
+      <SponsorInvoiceList invoices={invoices} />
 
       <section className="mt-10">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">

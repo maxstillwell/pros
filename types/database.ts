@@ -22,6 +22,7 @@ export type ContactTicketStatus =
   | "in_progress"
   | "resolved"
   | "archived";
+export type SponsorInvoiceStatus = "draft" | "issued" | "paid" | "cancelled";
 export type EmailType =
   | "application_received"
   | "admin_new_application"
@@ -342,6 +343,46 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["sponsors"]["Insert"]>;
+        Relationships: [];
+      };
+      sponsor_invoices: {
+        Row: {
+          id: string;
+          sponsor_id: string | null;
+          invoice_number: string;
+          issued_at: string;
+          due_at: string | null;
+          bill_to_name: string;
+          bill_to_email: string | null;
+          bill_to_address: string | null;
+          description: string;
+          amount: number;
+          currency: string;
+          notes: string | null;
+          status: SponsorInvoiceStatus;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          sponsor_id?: string | null;
+          invoice_number: string;
+          issued_at?: string;
+          due_at?: string | null;
+          bill_to_name: string;
+          bill_to_email?: string | null;
+          bill_to_address?: string | null;
+          description: string;
+          amount: number;
+          currency?: string;
+          notes?: string | null;
+          status?: SponsorInvoiceStatus;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["sponsor_invoices"]["Insert"]
+        >;
         Relationships: [];
       };
       sponsorship_tiers: {

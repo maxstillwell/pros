@@ -221,6 +221,24 @@ create table if not exists public.sponsors (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.sponsor_invoices (
+  id uuid primary key default gen_random_uuid(),
+  sponsor_id uuid references public.sponsors(id) on delete set null,
+  invoice_number text unique not null,
+  issued_at date not null default ((now() at time zone 'Australia/Melbourne')::date),
+  due_at date,
+  bill_to_name text not null,
+  bill_to_email text,
+  bill_to_address text,
+  description text not null,
+  amount integer not null check (amount > 0),
+  currency text not null default 'aud',
+  notes text,
+  status text not null default 'issued' check (status in ('draft', 'issued', 'paid', 'cancelled')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 insert into public.sponsorship_tiers (
   name,
   slug,
@@ -409,6 +427,10 @@ create index if not exists sponsorship_tiers_active_sort_order_idx
 create index if not exists sponsors_active_featured_sort_order_idx
   on public.sponsors(active, featured, sort_order);
 create index if not exists sponsors_tier_id_idx on public.sponsors(tier_id);
+create index if not exists sponsor_invoices_sponsor_id_idx
+  on public.sponsor_invoices(sponsor_id);
+create index if not exists sponsor_invoices_created_at_idx
+  on public.sponsor_invoices(created_at desc);
 create index if not exists email_logs_related_application_id_idx on public.email_logs(related_application_id);
 create index if not exists email_logs_related_profile_id_idx on public.email_logs(related_profile_id);
 create index if not exists email_logs_email_type_created_at_idx on public.email_logs(email_type, created_at desc);
@@ -458,6 +480,11 @@ create trigger sponsors_set_updated_at
 before update on public.sponsors
 for each row execute function public.set_updated_at();
 
+drop trigger if exists sponsor_invoices_set_updated_at on public.sponsor_invoices;
+create trigger sponsor_invoices_set_updated_at
+before update on public.sponsor_invoices
+for each row execute function public.set_updated_at();
+
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -496,6 +523,7 @@ alter table public.products enable row level security;
 alter table public.contact_tickets enable row level security;
 alter table public.sponsorship_tiers enable row level security;
 alter table public.sponsors enable row level security;
+alter table public.sponsor_invoices enable row level security;
 alter table public.email_logs enable row level security;
 
 drop policy if exists "Profiles are readable by owner" on public.profiles;
@@ -619,6 +647,12 @@ using (active is true);
 drop policy if exists "Sponsors are manageable by admins" on public.sponsors;
 create policy "Sponsors are manageable by admins"
 on public.sponsors for all
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "Sponsor invoices are manageable by admins" on public.sponsor_invoices;
+create policy "Sponsor invoices are manageable by admins"
+on public.sponsor_invoices for all
 using (public.is_admin())
 with check (public.is_admin());
 
