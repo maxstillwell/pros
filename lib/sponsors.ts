@@ -9,8 +9,6 @@ import type { Database } from "@/types/database";
 export type SponsorshipTier =
   Database["public"]["Tables"]["sponsorship_tiers"]["Row"];
 export type Sponsor = Database["public"]["Tables"]["sponsors"]["Row"];
-export type SponsorInvoice =
-  Database["public"]["Tables"]["sponsor_invoices"]["Row"];
 export type SponsorWithTier = Sponsor & {
   tier: SponsorshipTier | null;
 };
@@ -168,22 +166,4 @@ export async function getSponsorBySlug(slug: string) {
   const tiersById = new Map(tiers.map((tier) => [tier.id, tier]));
 
   return attachTier(data, tiersById);
-}
-
-export async function getSponsorInvoices({ limit = 25 }: { limit?: number } = {}) {
-  if (!hasSupabaseServiceConfig()) {
-    return [] as SponsorInvoice[];
-  }
-
-  const { data, error } = await createSupabaseServiceClient()
-    .from("sponsor_invoices")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error || !data) {
-    return [] as SponsorInvoice[];
-  }
-
-  return data;
 }

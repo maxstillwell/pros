@@ -6,6 +6,7 @@ const adminNav = [
   { href: "/admin/applications", label: "Applications" },
   { href: "/admin/members", label: "Members" },
   { href: "/admin/payments", label: "Payments" },
+  { href: "/admin/accounting", label: "Accounting" },
   { href: "/admin/posts", label: "Blog" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/sponsors", label: "Sponsors" },

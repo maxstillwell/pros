@@ -1,20 +1,17 @@
 import { getAdminAccess } from "@/lib/auth/profile";
 import {
-  generateSponsorInvoicePdf,
-  getSponsorInvoicePdfFilename,
-} from "@/lib/pdf/sponsor-invoice-pdf";
+  generateInvoicePdf,
+  getInvoicePdfFilename,
+} from "@/lib/pdf/invoice-pdf";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
-type SponsorInvoicePdfRouteProps = {
+type InvoicePdfRouteProps = {
   params: Promise<{
     id: string;
   }>;
 };
 
-export async function GET(
-  _request: Request,
-  { params }: SponsorInvoicePdfRouteProps,
-) {
+export async function GET(_request: Request, { params }: InvoicePdfRouteProps) {
   const access = await getAdminAccess();
 
   if (access.status !== "ok") {
@@ -32,8 +29,8 @@ export async function GET(
     return new Response("Invoice not found.", { status: 404 });
   }
 
-  const pdf = Buffer.from(generateSponsorInvoicePdf(invoice), "base64");
-  const filename = getSponsorInvoicePdfFilename(invoice);
+  const pdf = Buffer.from(generateInvoicePdf(invoice), "base64");
+  const filename = getInvoicePdfFilename(invoice);
 
   return new Response(pdf, {
     headers: {

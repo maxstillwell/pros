@@ -2,7 +2,7 @@ import "server-only";
 
 import { formatMelbourneDate } from "@/lib/time";
 
-type SponsorInvoicePdfInput = {
+type InvoicePdfInput = {
   amount: number;
   bill_to_address?: string | null;
   bill_to_email?: string | null;
@@ -181,14 +181,14 @@ function buildPdf(objects: string[]) {
   return Buffer.from(pdf).toString("base64");
 }
 
-export function getSponsorInvoicePdfFilename(input: SponsorInvoicePdfInput) {
+export function getInvoicePdfFilename(input: InvoicePdfInput) {
   const invoiceNumber = cleanFilePart(input.invoice_number || "invoice");
   const billTo = cleanFilePart(input.bill_to_name || "sponsor");
 
   return `PROS-Invoice-${invoiceNumber}-${billTo}.pdf`;
 }
 
-export function generateSponsorInvoicePdf(input: SponsorInvoicePdfInput) {
+export function generateInvoicePdf(input: InvoicePdfInput) {
   const commands: string[] = [];
   const tableLeft = margin;
   const tableWidth = pageWidth - margin * 2;
