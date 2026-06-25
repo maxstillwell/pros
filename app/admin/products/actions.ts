@@ -75,7 +75,7 @@ async function readImageValue(formData: FormData) {
       redirect("/admin/products?error=image-type");
     }
 
-    if (imageFile.size > 1_200_000) {
+    if (imageFile.size > 750_000) {
       redirect("/admin/products?error=image-size");
     }
 

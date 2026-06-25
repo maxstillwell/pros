@@ -70,7 +70,7 @@ function savedMessage(value: string) {
 
 function errorMessage(value: string) {
   const messages: Record<string, string> = {
-    "image-size": "Image is too large. Keep it under 1.2 MB.",
+    "image-size": "Image is too large. Keep it under 750 KB.",
     "image-type": "Image must be PNG, JPG, WebP or GIF.",
     "missing-id": "Missing product or order id.",
     "pickup-status": "Pickup status is not valid.",
@@ -150,7 +150,7 @@ function ProductFields({ product }: { product?: Product }) {
           className="mt-2 block w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-forest-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
         />
         <span className="mt-2 block text-xs font-normal leading-5 text-forest-900/58">
-          PNG, JPG, WebP or GIF. Keep it under 1.2 MB.
+          PNG, JPG, WebP or GIF. Keep it under 750 KB.
         </span>
       </label>
       {product?.image_url ? (
@@ -336,7 +336,7 @@ export default async function AdminProductsPage({
 
       <section className="mt-8 rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-forest-900">Create product</h2>
-        <form className="mt-6">
+        <form className="mt-6" encType="multipart/form-data">
           <ProductFields />
           <button formAction={createProduct} className={`${primaryButtonClass} mt-6`}>
             Create Product
@@ -363,7 +363,7 @@ export default async function AdminProductsPage({
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                   <div>
                     <p className="text-sm font-semibold uppercase text-clay">
-                      {product.active ? "Active" : "Hidden"} ·{" "}
+                      {product.active ? "Active" : "Hidden"} -{" "}
                       {formatProductPrice(product)}
                     </p>
                     <h3 className="mt-1 text-2xl font-semibold text-forest-900">
@@ -382,7 +382,7 @@ export default async function AdminProductsPage({
                     />
                   ) : null}
                 </div>
-                <form className="mt-6">
+                <form className="mt-6" encType="multipart/form-data">
                   <input type="hidden" name="id" value={product.id} />
                   <ProductFields product={product} />
                   <div className="mt-6 flex flex-wrap gap-3">
