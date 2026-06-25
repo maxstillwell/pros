@@ -15,11 +15,24 @@ type StripeMetadata = Record<string, string | undefined> | null | undefined;
 type StripeCheckoutSession = {
   id: string;
   amount_total?: number | null;
+  client_reference_id?: string | null;
   currency?: string | null;
   customer?: string | { id?: string } | null;
+  customer_details?: {
+    email?: string | null;
+    name?: string | null;
+    phone?: string | null;
+  } | null;
   customer_email?: string | null;
+  custom_fields?: {
+    key?: string | null;
+    text?: {
+      value?: string | null;
+    } | null;
+  }[] | null;
   metadata?: StripeMetadata;
   payment_status?: string | null;
+  payment_intent?: string | { id?: string } | null;
   subscription?: string | { id?: string } | null;
 };
 
@@ -51,6 +64,16 @@ type StripeEvent = {
 
 function stripeId(value: string | { id?: string } | null | undefined) {
   return typeof value === "string" ? value : value?.id ?? null;
+}
+
+function checkoutCustomField(
+  session: StripeCheckoutSession,
+  key: string,
+) {
+  return (
+    session.custom_fields?.find((field) => field.key === key)?.text?.value?.trim() ||
+    null
+  );
 }
 
 async function findMembershipRecords(
@@ -251,6 +274,66 @@ async function handleCheckoutCompleted(
   });
 }
 
+async function handleShopCheckoutCompleted(
+  supabase: SupabaseServiceClient,
+  session: StripeCheckoutSession,
+) {
+  const metadata = session.metadata ?? {};
+  const orderId = metadata.order_id ?? session.client_reference_id ?? null;
+  const memberNumber = checkoutCustomField(session, "pros_member_number");
+
+  if (!orderId) {
+    console.error("Stripe shop checkout missing order id", {
+      sessionId: session.id,
+    });
+    return;
+  }
+
+  if (
+    session.payment_status &&
+    !["paid", "no_payment_required"].includes(session.payment_status)
+  ) {
+    await supabase
+      .from("shop_orders")
+      .update({ status: "pending_payment" })
+      .eq("id", orderId);
+    return;
+  }
+
+  const paidAt = new Date().toISOString();
+  const customer = session.customer_details ?? {};
+  const { data: order } = await supabase
+    .from("shop_orders")
+    .update({
+      customer_email: customer.email ?? session.customer_email ?? null,
+      customer_name: customer.name ?? null,
+      customer_phone: customer.phone ?? null,
+      member_number: memberNumber,
+      paid_at: paidAt,
+      pickup_status: memberNumber ? "pending_event_pickup" : "contact_required",
+      status: "paid",
+      stripe_checkout_session_id: session.id,
+      stripe_customer_id: stripeId(session.customer),
+      stripe_payment_intent_id: stripeId(session.payment_intent),
+    })
+    .eq("id", orderId)
+    .select("*")
+    .maybeSingle();
+
+  await supabase.from("payments").upsert(
+    {
+      amount: session.amount_total ?? order?.amount ?? null,
+      currency: session.currency ?? order?.currency ?? "aud",
+      paid_at: paidAt,
+      payment_type: "shop",
+      status: "paid",
+      stripe_checkout_session_id: session.id,
+      stripe_customer_id: stripeId(session.customer),
+    },
+    { onConflict: "stripe_checkout_session_id" },
+  );
+}
+
 async function handleInvoiceSucceeded(
   supabase: SupabaseServiceClient,
   invoice: StripeInvoice,
@@ -314,10 +397,13 @@ export async function POST(request: Request) {
   const supabase = createSupabaseServiceClient();
 
   if (event.type === "checkout.session.completed") {
-    await handleCheckoutCompleted(
-      supabase,
-      event.data.object as StripeCheckoutSession,
-    );
+    const session = event.data.object as StripeCheckoutSession;
+
+    if (session.metadata?.payment_type === "shop") {
+      await handleShopCheckoutCompleted(supabase, session);
+    } else {
+      await handleCheckoutCompleted(supabase, session);
+    }
   }
 
   if (event.type === "invoice.payment_succeeded") {

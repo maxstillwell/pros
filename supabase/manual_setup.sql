@@ -164,13 +164,43 @@ create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   description text,
+  image_url text,
+  pickup_note text,
   price integer,
   currency text not null default 'aud',
   stripe_price_id text,
   active boolean not null default true,
+  sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+create table if not exists public.shop_orders (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid references public.products(id) on delete set null,
+  product_name text not null,
+  quantity integer not null default 1 check (quantity > 0),
+  amount integer not null check (amount > 0),
+  currency text not null default 'aud',
+  customer_name text,
+  customer_email text,
+  customer_phone text,
+  member_number text,
+  status text not null default 'pending_payment' check (status in ('pending_payment', 'paid', 'failed', 'cancelled', 'refunded')),
+  pickup_status text not null default 'pending_event_pickup' check (pickup_status in ('pending_event_pickup', 'ready_for_pickup', 'picked_up', 'contact_required', 'cancelled')),
+  pickup_note text,
+  stripe_checkout_session_id text unique,
+  stripe_customer_id text,
+  stripe_payment_intent_id text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  paid_at timestamptz
+);
+
+alter table public.products
+  add column if not exists image_url text,
+  add column if not exists pickup_note text,
+  add column if not exists sort_order integer not null default 0;
 
 create table if not exists public.contact_tickets (
   id uuid primary key default gen_random_uuid(),
@@ -420,6 +450,14 @@ create index if not exists payments_profile_id_idx on public.payments(profile_id
 create index if not exists payments_application_id_idx on public.payments(application_id);
 create index if not exists payments_member_number_idx on public.payments(member_number);
 create index if not exists posts_status_visibility_published_at_idx on public.posts(status, visibility, published_at desc);
+create index if not exists products_active_sort_order_idx
+  on public.products(active, sort_order);
+create index if not exists shop_orders_created_at_idx
+  on public.shop_orders(created_at desc);
+create index if not exists shop_orders_status_created_at_idx
+  on public.shop_orders(status, created_at desc);
+create index if not exists shop_orders_product_id_idx
+  on public.shop_orders(product_id);
 create index if not exists contact_tickets_status_created_at_idx
   on public.contact_tickets(status, created_at desc);
 create index if not exists sponsorship_tiers_active_sort_order_idx
@@ -463,6 +501,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists products_set_updated_at on public.products;
 create trigger products_set_updated_at
 before update on public.products
+for each row execute function public.set_updated_at();
+
+drop trigger if exists shop_orders_set_updated_at on public.shop_orders;
+create trigger shop_orders_set_updated_at
+before update on public.shop_orders
 for each row execute function public.set_updated_at();
 
 drop trigger if exists contact_tickets_set_updated_at on public.contact_tickets;
@@ -520,6 +563,7 @@ alter table public.applications enable row level security;
 alter table public.payments enable row level security;
 alter table public.posts enable row level security;
 alter table public.products enable row level security;
+alter table public.shop_orders enable row level security;
 alter table public.contact_tickets enable row level security;
 alter table public.sponsorship_tiers enable row level security;
 alter table public.sponsors enable row level security;
@@ -609,6 +653,12 @@ using (active is true);
 drop policy if exists "Products are manageable by admins" on public.products;
 create policy "Products are manageable by admins"
 on public.products for all
+using (public.is_admin())
+with check (public.is_admin());
+
+drop policy if exists "Shop orders are manageable by admins" on public.shop_orders;
+create policy "Shop orders are manageable by admins"
+on public.shop_orders for all
 using (public.is_admin())
 with check (public.is_admin());
 

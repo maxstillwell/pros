@@ -23,6 +23,18 @@ export type ContactTicketStatus =
   | "resolved"
   | "archived";
 export type SponsorInvoiceStatus = "draft" | "issued" | "paid" | "cancelled";
+export type ShopOrderStatus =
+  | "pending_payment"
+  | "paid"
+  | "failed"
+  | "cancelled"
+  | "refunded";
+export type ShopPickupStatus =
+  | "pending_event_pickup"
+  | "ready_for_pickup"
+  | "picked_up"
+  | "contact_required"
+  | "cancelled";
 export type EmailType =
   | "application_received"
   | "admin_new_application"
@@ -250,10 +262,13 @@ export type Database = {
           id: string;
           name: string;
           description: string | null;
+          image_url: string | null;
+          pickup_note: string | null;
           price: number | null;
           currency: string;
           stripe_price_id: string | null;
           active: boolean;
+          sort_order: number;
           created_at: string;
           updated_at: string;
         };
@@ -261,14 +276,63 @@ export type Database = {
           id?: string;
           name: string;
           description?: string | null;
+          image_url?: string | null;
+          pickup_note?: string | null;
           price?: number | null;
           currency?: string;
           stripe_price_id?: string | null;
           active?: boolean;
+          sort_order?: number;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
+        Relationships: [];
+      };
+      shop_orders: {
+        Row: {
+          id: string;
+          product_id: string | null;
+          product_name: string;
+          quantity: number;
+          amount: number;
+          currency: string;
+          customer_name: string | null;
+          customer_email: string | null;
+          customer_phone: string | null;
+          member_number: string | null;
+          status: ShopOrderStatus;
+          pickup_status: ShopPickupStatus;
+          pickup_note: string | null;
+          stripe_checkout_session_id: string | null;
+          stripe_customer_id: string | null;
+          stripe_payment_intent_id: string | null;
+          created_at: string;
+          updated_at: string;
+          paid_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          product_id?: string | null;
+          product_name: string;
+          quantity?: number;
+          amount: number;
+          currency?: string;
+          customer_name?: string | null;
+          customer_email?: string | null;
+          customer_phone?: string | null;
+          member_number?: string | null;
+          status?: ShopOrderStatus;
+          pickup_status?: ShopPickupStatus;
+          pickup_note?: string | null;
+          stripe_checkout_session_id?: string | null;
+          stripe_customer_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          paid_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["shop_orders"]["Insert"]>;
         Relationships: [];
       };
       contact_tickets: {
