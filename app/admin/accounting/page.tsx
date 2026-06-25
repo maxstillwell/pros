@@ -26,6 +26,8 @@ const secondaryButtonClass =
   "inline-flex min-h-11 items-center justify-center rounded-md border border-forest-900/20 px-5 py-3 text-sm font-semibold text-forest-900 transition hover:bg-forest-50";
 const dangerButtonClass =
   "inline-flex min-h-11 items-center justify-center rounded-md bg-red-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-800";
+const defaultInvoiceDescription =
+  "Annual Corporate Sponsorship\n\nSupporting responsible outdoor recreation, conservation, member education and community activities.";
 
 function moneyValue(amount: number, currency = "aud") {
   return `${currency.toUpperCase()} ${(amount / 100).toLocaleString("en-AU", {
@@ -171,7 +173,7 @@ function InvoiceForm({ sponsors }: { sponsors: SponsorWithTier[] }) {
               name="description"
               rows={3}
               required
-              placeholder="Example: Community Sponsor sponsorship for Prime Range Outdoor Society Inc."
+              defaultValue={defaultInvoiceDescription}
               className={textareaClass}
             />
           </label>

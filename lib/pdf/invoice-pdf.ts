@@ -101,6 +101,19 @@ function wrapText(value: string, maxChars: number) {
     });
 }
 
+function splitDescription(value: string) {
+  const lines = value
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const [title = "Invoice item", ...supportingLines] = lines;
+
+  return {
+    supportingText: supportingLines.join(" "),
+    title,
+  };
+}
+
 function approxTextWidth(value: string, size: number) {
   return value.length * size * 0.52;
 }
@@ -195,7 +208,15 @@ export function generateInvoicePdf(input: InvoicePdfInput) {
   const amountRight = pageWidth - margin;
   const amountColumnLeft = 448;
   const total = formatMoney(input.amount, input.currency);
-  const descriptionLines = wrapText(input.description, 68).slice(0, 8);
+  const description = splitDescription(input.description);
+  const descriptionTitleLines = wrapText(description.title, 54).slice(0, 2);
+  const descriptionSupportingLines = description.supportingText
+    ? wrapText(description.supportingText, 76).slice(0, 5)
+    : [];
+  const descriptionHeight =
+    descriptionTitleLines.length * 14 +
+    descriptionSupportingLines.length * 11 +
+    32;
   const billToLines = [
     input.bill_to_name,
     ...(input.bill_to_address ? wrapText(input.bill_to_address, 38) : []),
@@ -287,11 +308,26 @@ export function generateInvoicePdf(input: InvoicePdfInput) {
     size: 10,
   });
 
-  const rowHeight = Math.max(82, descriptionLines.length * 14 + 30);
+  const rowHeight = Math.max(82, descriptionHeight);
   rect(commands, tableLeft, 512 - rowHeight, tableWidth, rowHeight);
   line(commands, amountColumnLeft, 512, amountColumnLeft, 512 - rowHeight);
-  descriptionLines.forEach((row, index) => {
-    text(commands, tableLeft + 16, 488 - index * 14, row, { size: 10 });
+  descriptionTitleLines.forEach((row, index) => {
+    text(commands, tableLeft + 16, 488 - index * 14, row, {
+      font: "F2",
+      size: 11,
+    });
+  });
+  descriptionSupportingLines.forEach((row, index) => {
+    text(
+      commands,
+      tableLeft + 16,
+      488 - descriptionTitleLines.length * 14 - 2 - index * 11,
+      row,
+      {
+        color: colors.muted,
+        size: 8.5,
+      },
+    );
   });
   rightText(commands, amountRight - 16, 488, total, { font: "F2", size: 10 });
 
