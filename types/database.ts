@@ -409,6 +409,58 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["sponsors"]["Insert"]>;
         Relationships: [];
       };
+      accounting_transactions: {
+        Row: {
+          id: string;
+          transaction_date: string;
+          item: string;
+          notes: string | null;
+          credit: number;
+          debit: number;
+          currency: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          transaction_date?: string;
+          item: string;
+          notes?: string | null;
+          credit?: number;
+          debit?: number;
+          currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["accounting_transactions"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      accounting_attachments: {
+        Row: {
+          id: string;
+          transaction_id: string;
+          file_name: string;
+          file_path: string;
+          mime_type: string;
+          file_size: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          transaction_id: string;
+          file_name: string;
+          file_path: string;
+          mime_type: string;
+          file_size: number;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["accounting_attachments"]["Insert"]
+        >;
+        Relationships: [];
+      };
       sponsor_invoices: {
         Row: {
           id: string;

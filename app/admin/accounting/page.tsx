@@ -1,10 +1,21 @@
 import Link from "next/link";
-import { createInvoice, deleteInvoice } from "@/app/admin/accounting/actions";
+import {
+  createInvoice,
+  createTransaction,
+  deleteInvoice,
+  deleteTransaction,
+} from "@/app/admin/accounting/actions";
 import { AdminAccessNotice } from "@/components/admin/admin-access-notice";
 import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
 import { getAdminAccess } from "@/lib/auth/profile";
 import { formatDate } from "@/lib/format";
-import { getInvoices, type Invoice } from "@/lib/accounting";
+import {
+  getAccountingLedger,
+  getAccountingSummary,
+  getInvoices,
+  type AccountingLedgerRow,
+  type Invoice,
+} from "@/lib/accounting";
 import { getSponsors, type SponsorWithTier } from "@/lib/sponsors";
 
 type AdminAccountingPageProps = {
@@ -51,6 +62,14 @@ function melbourneDateInput(offsetDays = 0) {
 }
 
 function savedMessage(value: string) {
+  if (value === "transaction-created") {
+    return "Transaction created.";
+  }
+
+  if (value === "transaction-deleted") {
+    return "Transaction deleted.";
+  }
+
   if (value === "invoice-created") {
     return "Invoice created.";
   }
@@ -69,10 +88,242 @@ function errorMessage(value: string) {
     "invoice-delete": "Invoice could not be deleted.",
     "invoice-required":
       "Invoice needs a bill-to name, description and amount.",
-    "missing-id": "Invoice id is missing.",
+    "attachment-size": "Attachment is too large. Keep it under 3 MB.",
+    "attachment-type": "Attachment must be a PDF, JPG, PNG or WebP file.",
+    "attachment-upload":
+      "Attachment could not be uploaded. Check the accounting storage bucket.",
+    "missing-id": "The selected record id is missing.",
+    "transaction-create":
+      "Transaction could not be created. Check the accounting database tables have been added.",
+    "transaction-delete": "Transaction could not be deleted.",
+    "transaction-required":
+      "Transaction needs an item and either a credit amount or debit amount.",
   };
 
   return messages[value] ?? "Accounting update failed.";
+}
+
+function SummaryCards({
+  summary,
+}: {
+  summary: ReturnType<typeof getAccountingSummary>;
+}) {
+  const cards = [
+    { label: "Current balance", value: moneyValue(summary.balance) },
+    { label: "Total credit", value: moneyValue(summary.totalCredit) },
+    { label: "Total debit", value: moneyValue(summary.totalDebit) },
+    { label: "Transactions", value: summary.count.toLocaleString("en-AU") },
+  ];
+
+  return (
+    <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className="rounded-md border border-forest-900/10 bg-white p-5 shadow-sm"
+        >
+          <p className="text-xs font-semibold uppercase text-clay">
+            {card.label}
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-forest-900">
+            {card.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TransactionForm() {
+  return (
+    <section
+      id="transactions"
+      className="mt-8 rounded-md border border-forest-900/10 bg-white p-6 shadow-sm"
+    >
+      <div>
+        <h2 className="text-xl font-semibold text-forest-900">
+          Add transaction
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-forest-900/70">
+          Record money received as credit, or money spent as debit.
+        </p>
+      </div>
+
+      <form className="mt-6" encType="multipart/form-data">
+        <div className="grid gap-5 md:grid-cols-2">
+          <label className={labelClass}>
+            Date
+            <input
+              name="transaction_date"
+              type="date"
+              defaultValue={melbourneDateInput()}
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Item
+            <input
+              name="item"
+              required
+              placeholder="Sponsor payment, event supplies, membership payment"
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Credit in dollars
+            <input
+              name="credit_dollars"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              className={inputClass}
+            />
+          </label>
+          <label className={labelClass}>
+            Debit in dollars
+            <input
+              name="debit_dollars"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="0.00"
+              className={inputClass}
+            />
+          </label>
+          <label className={`${labelClass} md:col-span-2`}>
+            Notes
+            <textarea
+              name="notes"
+              rows={3}
+              placeholder="Optional reference, payer, invoice number or receipt details"
+              className={textareaClass}
+            />
+          </label>
+          <label className={`${labelClass} md:col-span-2`}>
+            Attachment
+            <input
+              name="attachment"
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp"
+              className="mt-2 block w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-forest-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+            />
+            <span className="mt-2 block text-xs font-normal leading-5 text-forest-900/58">
+              PDF, JPG, PNG or WebP. Keep it under 3 MB.
+            </span>
+          </label>
+        </div>
+        <button
+          formAction={createTransaction}
+          className={`${primaryButtonClass} mt-6`}
+        >
+          Add Transaction
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function TransactionList({ rows }: { rows: AccountingLedgerRow[] }) {
+  const displayRows = [...rows].reverse();
+
+  return (
+    <section className="mt-10 rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div>
+          <p className="text-sm font-semibold uppercase text-clay">Ledger</p>
+          <h2 className="mt-2 text-xl font-semibold text-forest-900">
+            Transactions
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <a href="/admin/accounting/export/csv" className={secondaryButtonClass}>
+            Download CSV
+          </a>
+          <a href="/admin/accounting/export/pdf" className={secondaryButtonClass}>
+            Download PDF
+          </a>
+        </div>
+      </div>
+
+      {displayRows.length ? (
+        <div className="mt-5 overflow-x-auto">
+          <table className="w-full min-w-[72rem] text-left text-sm">
+            <thead className="border-b border-forest-900/10 text-xs uppercase text-forest-900/58">
+              <tr>
+                <th className="py-3 pr-4 font-semibold">Date</th>
+                <th className="py-3 pr-4 font-semibold">Item</th>
+                <th className="py-3 pr-4 text-right font-semibold">Credit</th>
+                <th className="py-3 pr-4 text-right font-semibold">Debit</th>
+                <th className="py-3 pr-4 text-right font-semibold">Balance</th>
+                <th className="py-3 pr-4 font-semibold">Attachment</th>
+                <th className="py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-forest-900/10">
+              {displayRows.map((row) => (
+                <tr key={row.id}>
+                  <td className="py-4 pr-4 text-forest-900/70">
+                    {formatDate(row.transaction_date)}
+                  </td>
+                  <td className="py-4 pr-4">
+                    <p className="font-semibold text-forest-900">{row.item}</p>
+                    {row.notes ? (
+                      <p className="mt-1 max-w-md text-xs leading-5 text-forest-900/58">
+                        {row.notes}
+                      </p>
+                    ) : null}
+                  </td>
+                  <td className="py-4 pr-4 text-right font-semibold text-forest-900">
+                    {row.credit ? moneyValue(row.credit) : "-"}
+                  </td>
+                  <td className="py-4 pr-4 text-right font-semibold text-forest-900">
+                    {row.debit ? moneyValue(row.debit) : "-"}
+                  </td>
+                  <td className="py-4 pr-4 text-right font-semibold text-forest-900">
+                    {moneyValue(row.balance)}
+                  </td>
+                  <td className="py-4 pr-4 text-forest-900/70">
+                    {row.attachments.length ? (
+                      <div className="grid gap-2">
+                        {row.attachments.map((attachment) => (
+                          <a
+                            key={attachment.id}
+                            href={`/admin/accounting/attachments/${attachment.id}`}
+                            className="font-semibold text-clay hover:text-forest-900"
+                          >
+                            {attachment.file_name}
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      "None"
+                    )}
+                  </td>
+                  <td className="py-4">
+                    <form>
+                      <input type="hidden" name="id" value={row.id} />
+                      <ConfirmSubmitButton
+                        formAction={deleteTransaction}
+                        message="Delete this transaction and its attachments permanently?"
+                        className={dangerButtonClass}
+                      >
+                        Delete
+                      </ConfirmSubmitButton>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-5 text-sm leading-6 text-forest-900/70">
+          No transactions have been recorded yet.
+        </p>
+      )}
+    </section>
+  );
 }
 
 function InvoiceForm({ sponsors }: { sponsors: SponsorWithTier[] }) {
@@ -310,10 +561,12 @@ export default async function AdminAccountingPage({
   }
 
   const params = await searchParams;
-  const [invoices, sponsors] = await Promise.all([
+  const [ledgerRows, invoices, sponsors] = await Promise.all([
+    getAccountingLedger(),
     getInvoices(),
     getSponsors({ includeInactive: true }),
   ]);
+  const summary = getAccountingSummary(ledgerRows);
   const sponsorsById = new Map(sponsors.map((sponsor) => [sponsor.id, sponsor]));
   const newInvoiceHref = params.invoice
     ? `/admin/accounting/invoices/${params.invoice}/pdf`
@@ -325,16 +578,24 @@ export default async function AdminAccountingPage({
         <div>
           <p className="text-sm font-semibold uppercase text-clay">Accounting</p>
           <h1 className="mt-2 text-3xl font-semibold text-forest-900">
-            Invoices
+            Ledger and invoices
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-forest-900/70">
-            Create and download PROS invoice PDFs. Invoices can be linked to a
-            sponsor, or left as a general accounting record.
+            Record manual credits and debits, attach receipts or invoices, and
+            export accounting records for bookkeeping.
           </p>
         </div>
-        <Link href="/admin/payments" className={secondaryButtonClass}>
-          View Payments
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/payments" className={secondaryButtonClass}>
+            View Payments
+          </Link>
+          <a href="/admin/accounting/export/csv" className={secondaryButtonClass}>
+            Export CSV
+          </a>
+          <a href="/admin/accounting/export/pdf" className={secondaryButtonClass}>
+            Export PDF
+          </a>
+        </div>
       </div>
 
       {params.saved ? (
@@ -357,6 +618,9 @@ export default async function AdminAccountingPage({
         </div>
       ) : null}
 
+      <SummaryCards summary={summary} />
+      <TransactionForm />
+      <TransactionList rows={ledgerRows} />
       <InvoiceForm sponsors={sponsors} />
       <InvoiceList invoices={invoices} sponsorsById={sponsorsById} />
     </div>
