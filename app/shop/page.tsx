@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
 import { ShopCheckoutForm } from "@/components/shop/shop-checkout-form";
-import { getProducts } from "@/lib/shop";
+import { getProducts, withPublicProductImages } from "@/lib/shop";
 
 export default async function ShopPage() {
-  const products = await getProducts();
+  const products = withPublicProductImages(await getProducts());
 
   return (
     <SiteShell>

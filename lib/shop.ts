@@ -23,6 +23,29 @@ export function formatProductPrice(product: Pick<Product, "currency" | "price">)
   }).format(product.price / 100);
 }
 
+export function publicProductImageUrl(
+  product: Pick<Product, "id" | "image_url">,
+) {
+  if (!product.image_url) {
+    return null;
+  }
+
+  if (product.image_url.startsWith("data:image/")) {
+    return `/api/products/${product.id}/image`;
+  }
+
+  return product.image_url;
+}
+
+export function withPublicProductImages<T extends Pick<Product, "id" | "image_url">>(
+  products: T[],
+) {
+  return products.map((product) => ({
+    ...product,
+    image_url: publicProductImageUrl(product),
+  }));
+}
+
 export async function getProducts({
   includeInactive = false,
 }: {

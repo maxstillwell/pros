@@ -4,7 +4,7 @@ import { HeroSlideshow } from "@/components/home/hero-slideshow";
 import { SiteShell } from "@/components/layout/site-shell";
 import { SponsorLogoMarquee } from "@/components/sponsors/sponsor-logo-marquee";
 import { membershipSteps } from "@/lib/site-content";
-import { getProducts } from "@/lib/shop";
+import { getProducts, publicProductImageUrl } from "@/lib/shop";
 import { getSponsors } from "@/lib/sponsors";
 
 const societyFocus = [
@@ -38,7 +38,11 @@ export default async function HomePage() {
     getProducts(),
   ]);
   const shopShowcaseProducts = products
-    .filter((product) => product.image_url)
+    .map((product) => ({
+      ...product,
+      publicImageUrl: publicProductImageUrl(product),
+    }))
+    .filter((product) => product.publicImageUrl)
     .slice(0, 3);
 
   return (
@@ -178,8 +182,8 @@ export default async function HomePage() {
                           index === 0 ? "aspect-[16/9]" : "aspect-[4/3]"
                         }`}
                         style={{
-                          backgroundImage: product.image_url
-                            ? `url(${product.image_url})`
+                          backgroundImage: product.publicImageUrl
+                            ? `url(${product.publicImageUrl})`
                             : undefined,
                         }}
                         aria-label={`${product.name} product image`}
