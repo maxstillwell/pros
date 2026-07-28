@@ -70,7 +70,7 @@ function savedMessage(value: string) {
 
 function errorMessage(value: string) {
   const messages: Record<string, string> = {
-    "image-size": "Image is too large. Keep it under 750 KB.",
+    "image-size": "Image is too large. Keep it under 3 MB.",
     "image-type": "Image must be PNG, JPG, WebP or GIF.",
     "missing-id": "Missing product or order id.",
     "pickup-status": "Pickup status is not valid.",
@@ -150,7 +150,7 @@ function ProductFields({ product }: { product?: Product }) {
           className="mt-2 block w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-forest-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
         />
         <span className="mt-2 block text-xs font-normal leading-5 text-forest-900/58">
-          PNG, JPG, WebP or GIF. Keep it under 750 KB.
+          PNG, JPG, WebP or GIF. Keep it under 3 MB.
         </span>
       </label>
       {product?.image_url ? (

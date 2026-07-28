@@ -14,6 +14,7 @@ const pickupStatuses: ShopPickupStatus[] = [
   "contact_required",
   "cancelled",
 ];
+const maxProductImageSize = 3 * 1024 * 1024;
 
 function readString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -75,7 +76,7 @@ async function readImageValue(formData: FormData) {
       redirect("/admin/products?error=image-type");
     }
 
-    if (imageFile.size > 750_000) {
+    if (imageFile.size > maxProductImageSize) {
       redirect("/admin/products?error=image-size");
     }
 
