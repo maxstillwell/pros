@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  BlogArticleBody,
+  hasBallisticsChart,
+} from "@/components/blog/blog-article-body";
 import { SiteShell } from "@/components/layout/site-shell";
 import { formatDate } from "@/lib/format";
 import { getPublicBlogPostBySlug } from "@/lib/blog";
@@ -18,10 +22,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
+  const hasWideContent = hasBallisticsChart(post.body);
+
   return (
     <SiteShell>
       <main className="px-5 py-16">
-        <article className="mx-auto max-w-3xl">
+        <article
+          className={`mx-auto ${hasWideContent ? "max-w-6xl" : "max-w-3xl"}`}
+        >
           <Link
             href="/blog"
             className="text-sm font-semibold text-clay hover:text-forest-900"
@@ -41,8 +49,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               {post.excerpt}
             </p>
           ) : null}
-          <div className="mt-8 whitespace-pre-line border-t border-forest-900/10 pt-8 text-base leading-8 text-forest-900/78">
-            {post.body ?? "This article does not have body content yet."}
+          <div className="mt-8 border-t border-forest-900/10 pt-8">
+            <BlogArticleBody body={post.body} />
           </div>
         </article>
       </main>

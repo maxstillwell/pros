@@ -85,6 +85,10 @@ export function PostFormFields({ post }: PostFormProps) {
           defaultValue={post?.body ?? ""}
           className={textareaClass}
         />
+        <span className="mt-2 block text-xs font-normal leading-5 text-forest-900/58">
+          Use [pros-ballistics-chart] where the common calibre ballistics chart
+          should appear.
+        </span>
       </label>
     </div>
   );

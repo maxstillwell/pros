@@ -1,6 +1,6 @@
 import "server-only";
 
-import { placeholderPosts } from "@/lib/site-content";
+import { builtInBlogPosts, placeholderPosts } from "@/lib/site-content";
 import {
   createSupabaseServiceClient,
   hasSupabaseServiceConfig,
@@ -27,7 +27,32 @@ function placeholderToPost(
   };
 }
 
-const fallbackPosts = placeholderPosts.map(placeholderToPost);
+const builtInPosts = builtInBlogPosts.map(placeholderToPost);
+const fallbackPosts = [...builtInBlogPosts, ...placeholderPosts].map(
+  placeholderToPost,
+);
+
+function sortPosts(posts: BlogPost[]) {
+  return posts.sort((a, b) => {
+    const first = a.published_at ?? a.created_at;
+    const second = b.published_at ?? b.created_at;
+    return second.localeCompare(first);
+  });
+}
+
+function mergeBuiltInPosts(posts: BlogPost[]) {
+  const bySlug = new Map<string, BlogPost>();
+
+  for (const post of builtInPosts) {
+    bySlug.set(post.slug, post);
+  }
+
+  for (const post of posts) {
+    bySlug.set(post.slug, post);
+  }
+
+  return sortPosts(Array.from(bySlug.values()));
+}
 
 export async function getPublicBlogPosts() {
   if (!hasSupabaseServiceConfig()) {
@@ -43,10 +68,10 @@ export async function getPublicBlogPosts() {
     .order("created_at", { ascending: false });
 
   if (error || !data) {
-    return [] as BlogPost[];
+    return builtInPosts;
   }
 
-  return data;
+  return mergeBuiltInPosts(data);
 }
 
 export async function getPublicBlogPostBySlug(slug: string) {
@@ -63,7 +88,7 @@ export async function getPublicBlogPostBySlug(slug: string) {
     .maybeSingle();
 
   if (error || !data) {
-    return null;
+    return builtInPosts.find((post) => post.slug === slug) ?? null;
   }
 
   return data;

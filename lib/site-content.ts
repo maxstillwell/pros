@@ -37,6 +37,21 @@ export const membershipBenefits = [
   },
 ];
 
+export const commonCalibreBallisticsSlug =
+  "common-calibre-ballistics-100-to-1000-metres";
+
+export const builtInBlogPosts = [
+  {
+    title:
+      "Common Calibre Ballistics: .22 LR, .223 Rem, .308 Win, 6.5 Creedmoor and .300 Win Mag",
+    slug: commonCalibreBallisticsSlug,
+    excerpt:
+      "A simple visual comparison of five common calibres from 100 metres to 1,000 metres, using a 100 metre zero and typical factory-load assumptions.",
+    body: "This article gives a broad visual comparison of five common sporting calibres often discussed around hunting, field shooting and long-range practice: .22 LR, .223 Remington, .308 Winchester, 6.5 Creedmoor and .300 Winchester Magnum.\n\nThe charts below are illustrative only. Real-world trajectory changes with rifle, barrel length, projectile, ballistic coefficient, muzzle velocity, sight height, weather, altitude, wind and confirmed zero. Always use manufacturer data, a verified ballistic calculator and live confirmation on an approved range before relying on any trajectory information.\n\nThe comparison uses a 100 metre zero and typical factory-load style assumptions so readers can understand the general shape of each cartridge's performance, not exact firing solutions.\n\n[pros-ballistics-chart]",
+    publishedAt: "2026-07-28",
+  },
+];
+
 export const placeholderPosts = [
   {
     title: "Welcome to the new PROS website framework",
