@@ -4,6 +4,7 @@ import { HeroSlideshow } from "@/components/home/hero-slideshow";
 import { SiteShell } from "@/components/layout/site-shell";
 import { SponsorLogoMarquee } from "@/components/sponsors/sponsor-logo-marquee";
 import { membershipSteps } from "@/lib/site-content";
+import { getProducts } from "@/lib/shop";
 import { getSponsors } from "@/lib/sponsors";
 
 const societyFocus = [
@@ -32,7 +33,13 @@ const heroSlides = [
 ];
 
 export default async function HomePage() {
-  const featuredSponsors = await getSponsors({ featuredOnly: true });
+  const [featuredSponsors, products] = await Promise.all([
+    getSponsors({ featuredOnly: true }),
+    getProducts(),
+  ]);
+  const shopShowcaseProducts = products
+    .filter((product) => product.image_url)
+    .slice(0, 3);
 
   return (
     <SiteShell>
@@ -149,32 +156,53 @@ export default async function HomePage() {
                   managed through secure checkout and collected through suitable
                   society arrangements.
                 </p>
-              </div>
-              <div className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
-                <p className="text-sm font-semibold uppercase text-clay">
-                  Shop support
-                </p>
-                <ul className="mt-4 grid gap-3 text-sm leading-6 text-forest-900/72">
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-clay" />
-                    <span>Member-focused products and society merchandise.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-clay" />
-                    <span>Purchases help fund responsible outdoor recreation.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-clay" />
-                    <span>Secure Stripe checkout with PROS order follow-up.</span>
-                  </li>
-                </ul>
                 <Link
                   href="/shop"
-                  className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900 sm:w-auto"
+                  className="mt-7 inline-flex min-h-11 items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900"
                 >
                   Visit the Shop
                 </Link>
               </div>
+              {shopShowcaseProducts.length ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {shopShowcaseProducts.map((product, index) => (
+                    <Link
+                      key={product.id}
+                      href="/shop"
+                      className={`group overflow-hidden rounded-md border border-forest-900/10 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                        index === 0 ? "col-span-2" : ""
+                      }`}
+                    >
+                      <div
+                        className={`bg-forest-50 bg-contain bg-center bg-no-repeat ${
+                          index === 0 ? "aspect-[16/9]" : "aspect-[4/3]"
+                        }`}
+                        style={{
+                          backgroundImage: product.image_url
+                            ? `url(${product.image_url})`
+                            : undefined,
+                        }}
+                        aria-label={`${product.name} product image`}
+                      />
+                      <div className="border-t border-forest-900/10 px-4 py-3">
+                        <p className="truncate text-sm font-semibold text-forest-900 group-hover:text-clay">
+                          {product.name}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
+                  <p className="text-sm font-semibold uppercase text-clay">
+                    Shop support
+                  </p>
+                  <p className="mt-4 text-sm leading-6 text-forest-900/72">
+                    PROS products will appear in the member shop as they become
+                    available.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </section>
