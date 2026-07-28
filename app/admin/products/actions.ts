@@ -196,3 +196,39 @@ export async function updateShopOrderPickupStatus(formData: FormData) {
 
   redirect("/admin/products?saved=pickup-updated#orders");
 }
+
+export async function deleteShopOrder(formData: FormData) {
+  const { id, supabase } = await getProductActionContext(formData);
+  const { error } = await supabase.from("shop_orders").delete().eq("id", id);
+
+  revalidatePath("/admin/products");
+
+  if (error) {
+    redirect("/admin/products?error=order-delete#orders");
+  }
+
+  redirect("/admin/products?saved=order-deleted#orders");
+}
+
+export async function deletePendingShopOrders(_formData: FormData) {
+  void _formData;
+
+  const access = await getAdminAccess();
+
+  if (access.status !== "ok") {
+    redirect("/login?redirectTo=/admin/products");
+  }
+
+  const { error } = await createSupabaseServiceClient()
+    .from("shop_orders")
+    .delete()
+    .eq("status", "pending_payment");
+
+  revalidatePath("/admin/products");
+
+  if (error) {
+    redirect("/admin/products?error=pending-orders-delete#orders");
+  }
+
+  redirect("/admin/products?saved=pending-orders-deleted#orders");
+}

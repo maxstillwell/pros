@@ -76,6 +76,11 @@ function checkoutCustomField(
   );
 }
 
+function positiveInteger(value: string | number | null | undefined) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null;
+}
+
 async function findMembershipRecords(
   supabase: SupabaseServiceClient,
   {
@@ -279,46 +284,91 @@ async function handleShopCheckoutCompleted(
   session: StripeCheckoutSession,
 ) {
   const metadata = session.metadata ?? {};
-  const orderId = metadata.order_id ?? session.client_reference_id ?? null;
-  const memberNumber = checkoutCustomField(session, "pros_member_number");
-
-  if (!orderId) {
-    console.error("Stripe shop checkout missing order id", {
-      sessionId: session.id,
-    });
-    return;
-  }
+  const customer = session.customer_details ?? {};
+  const customerEmail =
+    metadata.customer_email ?? customer.email ?? session.customer_email ?? null;
+  const customerName = metadata.customer_name ?? customer.name ?? null;
+  const customerPhone = metadata.customer_phone ?? customer.phone ?? null;
+  const memberNumber =
+    metadata.member_number ?? checkoutCustomField(session, "pros_member_number");
 
   if (
     session.payment_status &&
     !["paid", "no_payment_required"].includes(session.payment_status)
   ) {
-    await supabase
-      .from("shop_orders")
-      .update({ status: "pending_payment" })
-      .eq("id", orderId);
+    if (metadata.order_id) {
+      await supabase
+        .from("shop_orders")
+        .update({ status: "pending_payment" })
+        .eq("id", metadata.order_id);
+    }
+
     return;
   }
 
   const paidAt = new Date().toISOString();
-  const customer = session.customer_details ?? {};
-  const { data: order } = await supabase
-    .from("shop_orders")
-    .update({
-      customer_email: customer.email ?? session.customer_email ?? null,
-      customer_name: customer.name ?? null,
-      customer_phone: customer.phone ?? null,
-      member_number: memberNumber,
-      paid_at: paidAt,
-      pickup_status: memberNumber ? "pending_event_pickup" : "contact_required",
-      status: "paid",
-      stripe_checkout_session_id: session.id,
-      stripe_customer_id: stripeId(session.customer),
-      stripe_payment_intent_id: stripeId(session.payment_intent),
-    })
-    .eq("id", orderId)
-    .select("*")
-    .maybeSingle();
+  const amount = session.amount_total ?? positiveInteger(metadata.amount);
+  const quantity = positiveInteger(metadata.quantity) ?? 1;
+  const currency = session.currency ?? metadata.currency ?? "aud";
+  const productName = metadata.product_name ?? "PROS shop item";
+  let order = null;
+
+  if (metadata.order_id) {
+    const { data } = await supabase
+      .from("shop_orders")
+      .update({
+        customer_email: customerEmail,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        member_number: memberNumber,
+        paid_at: paidAt,
+        pickup_status: memberNumber ? "pending_event_pickup" : "contact_required",
+        status: "paid",
+        stripe_checkout_session_id: session.id,
+        stripe_customer_id: stripeId(session.customer),
+        stripe_payment_intent_id: stripeId(session.payment_intent),
+      })
+      .eq("id", metadata.order_id)
+      .select("*")
+      .maybeSingle();
+
+    order = data;
+  } else if (amount && amount > 0) {
+    const { data, error } = await supabase
+      .from("shop_orders")
+      .upsert(
+        {
+          amount,
+          currency,
+          customer_email: customerEmail,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          member_number: memberNumber,
+          paid_at: paidAt,
+          pickup_note: metadata.pickup_note ?? null,
+          pickup_status: memberNumber ? "pending_event_pickup" : "contact_required",
+          product_id: metadata.product_id ?? null,
+          product_name: productName,
+          quantity,
+          status: "paid",
+          stripe_checkout_session_id: session.id,
+          stripe_customer_id: stripeId(session.customer),
+          stripe_payment_intent_id: stripeId(session.payment_intent),
+        },
+        { onConflict: "stripe_checkout_session_id" },
+      )
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      console.error("Stripe shop order could not be created", {
+        error,
+        sessionId: session.id,
+      });
+    }
+
+    order = data;
+  }
 
   await supabase.from("payments").upsert(
     {

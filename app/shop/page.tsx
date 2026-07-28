@@ -83,13 +83,57 @@ function ProductCard({ product }: { product: Product }) {
         >
           <input type="hidden" name="productId" value={product.id} />
           <input type="hidden" name="quantity" value="1" />
-          <div className="flex items-center justify-between gap-4 text-sm">
-            <span className="font-semibold text-forest-900">
-              Secure Stripe checkout
-            </span>
-            <span className="font-semibold text-forest-900">
-              {formatProductPrice(product)}
-            </span>
+          <div className="grid gap-3">
+            <label className="block text-sm font-semibold text-forest-900">
+              Full name
+              <input
+                name="customer_name"
+                required
+                autoComplete="name"
+                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+              />
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-sm font-semibold text-forest-900">
+                Email
+                <input
+                  name="customer_email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+                />
+              </label>
+              <label className="block text-sm font-semibold text-forest-900">
+                Phone
+                <input
+                  name="customer_phone"
+                  type="tel"
+                  required
+                  autoComplete="tel"
+                  className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+                />
+              </label>
+            </div>
+            <label className="block text-sm font-semibold text-forest-900">
+              PROS member number
+              <input
+                name="member_number"
+                required
+                placeholder="PROS-001"
+                className="mt-2 min-h-11 w-full rounded-md border border-forest-900/20 bg-white px-3 py-2 text-sm uppercase outline-none focus:border-forest-700 focus:ring-2 focus:ring-forest-700/20"
+              />
+            </label>
+          </div>
+          <div className="mt-5 border-t border-forest-900/10 pt-4">
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <span className="font-semibold text-forest-900">
+                Secure Stripe checkout
+              </span>
+              <span className="font-semibold text-forest-900">
+                {formatProductPrice(product)}
+              </span>
+            </div>
           </div>
           <button
             type="submit"

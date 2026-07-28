@@ -19,6 +19,28 @@ function readQuantity(formData: FormData) {
   return Math.min(Math.max(Math.round(value), 1), 10);
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function requiredCheckoutDetails(formData: FormData) {
+  const customerName = readFormString(formData, "customer_name");
+  const customerEmail = readFormString(formData, "customer_email").toLowerCase();
+  const customerPhone = readFormString(formData, "customer_phone");
+  const memberNumber = readFormString(formData, "member_number").toUpperCase();
+
+  if (!customerName || !isValidEmail(customerEmail) || !customerPhone || !memberNumber) {
+    return null;
+  }
+
+  return {
+    customerEmail,
+    customerName,
+    customerPhone,
+    memberNumber,
+  };
+}
+
 function stripeDescription(value: string | null, pickupNote: string) {
   const description = value?.trim();
   const rows = [
@@ -30,17 +52,27 @@ function stripeDescription(value: string | null, pickupNote: string) {
   return rows.join(" ");
 }
 
+function metadataValue(value: string | number | null | undefined) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return String(value).slice(0, 500);
+}
+
 function setMetadata(
   body: URLSearchParams,
-  metadata: Record<string, string | null | undefined>,
+  metadata: Record<string, string | number | null | undefined>,
 ) {
   Object.entries(metadata).forEach(([key, value]) => {
-    if (!value) {
+    const safeValue = metadataValue(value);
+
+    if (!safeValue) {
       return;
     }
 
-    body.set(`metadata[${key}]`, value);
-    body.set(`payment_intent_data[metadata][${key}]`, value);
+    body.set(`metadata[${key}]`, safeValue);
+    body.set(`payment_intent_data[metadata][${key}]`, safeValue);
   });
 }
 
@@ -57,9 +89,17 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const productId = readFormString(formData, "productId");
   const quantity = readQuantity(formData);
+  const checkoutDetails = requiredCheckoutDetails(formData);
 
   if (!productId) {
     return Response.json({ error: "Missing product." }, { status: 400 });
+  }
+
+  if (!checkoutDetails) {
+    return Response.json(
+      { error: "Name, email, phone and member number are required." },
+      { status: 400 },
+    );
   }
 
   const supabase = createSupabaseServiceClient();
@@ -78,37 +118,15 @@ export async function POST(request: Request) {
   }
 
   const pickupNote = product.pickup_note || defaultPickupNote;
-  const amount = product.price * quantity;
-  const { data: order, error: orderError } = await supabase
-    .from("shop_orders")
-    .insert({
-      amount,
-      currency: product.currency || "aud",
-      pickup_note: pickupNote,
-      pickup_status: "pending_event_pickup",
-      product_id: product.id,
-      product_name: product.name,
-      quantity,
-      status: "pending_payment",
-    })
-    .select("*")
-    .single();
-
-  if (orderError || !order) {
-    return Response.json(
-      { error: "Order could not be created." },
-      { status: 500 },
-    );
-  }
-
   const siteUrl = getSiteUrl().replace(/\/$/, "");
   const body = new URLSearchParams({
     mode: "payment",
-    client_reference_id: order.id,
+    client_reference_id: product.id,
     customer_creation: "always",
+    customer_email: checkoutDetails.customerEmail,
     success_url: `${siteUrl}/shop/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}/shop/cancelled?order=${order.id}`,
-    "phone_number_collection[enabled]": "true",
+    cancel_url: `${siteUrl}/shop/cancelled`,
+    "phone_number_collection[enabled]": "false",
     "line_items[0][price_data][currency]": product.currency || "aud",
     "line_items[0][price_data][unit_amount]": String(product.price),
     "line_items[0][price_data][product_data][name]": product.name,
@@ -119,19 +137,20 @@ export async function POST(request: Request) {
     "line_items[0][quantity]": String(quantity),
     "custom_text[submit][message]":
       "Member-only item. Pickup at the next PROS society event only. No postal delivery.",
-    "custom_fields[0][key]": "pros_member_number",
-    "custom_fields[0][label][type]": "custom",
-    "custom_fields[0][label][custom]": "PROS member number (if applicable)",
-    "custom_fields[0][type]": "text",
-    "custom_fields[0][optional]": "true",
   });
 
   setMetadata(body, {
-    order_id: order.id,
+    amount: product.price * quantity,
+    customer_email: checkoutDetails.customerEmail,
+    customer_name: checkoutDetails.customerName,
+    customer_phone: checkoutDetails.customerPhone,
+    member_number: checkoutDetails.memberNumber,
     payment_type: "shop",
     pickup: "event_only",
+    pickup_note: pickupNote,
     product_id: product.id,
     product_name: product.name,
+    quantity,
   });
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -147,11 +166,6 @@ export async function POST(request: Request) {
     | null;
 
   if (!response.ok || !payload?.id || !payload.url) {
-    await supabase
-      .from("shop_orders")
-      .update({ status: "failed" })
-      .eq("id", order.id);
-
     return Response.json(
       {
         error:
@@ -161,11 +175,6 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-
-  await supabase
-    .from("shop_orders")
-    .update({ stripe_checkout_session_id: payload.id })
-    .eq("id", order.id);
 
   return Response.redirect(payload.url, 303);
 }

@@ -1,7 +1,9 @@
 import Link from "next/link";
 import {
   createProduct,
+  deletePendingShopOrders,
   deleteProduct,
+  deleteShopOrder,
   updateProduct,
   updateShopOrderPickupStatus,
 } from "@/app/admin/products/actions";
@@ -60,6 +62,8 @@ function moneyValue(amount: number, currency = "aud") {
 function savedMessage(value: string) {
   const messages: Record<string, string> = {
     "pickup-updated": "Pickup status updated.",
+    "order-deleted": "Shop order deleted.",
+    "pending-orders-deleted": "Pending shop orders deleted.",
     "product-created": "Product created.",
     "product-deleted": "Product deleted.",
     "product-updated": "Product updated.",
@@ -73,6 +77,8 @@ function errorMessage(value: string) {
     "image-size": "Image is too large. Keep it under 3 MB.",
     "image-type": "Image must be PNG, JPG, WebP or GIF.",
     "missing-id": "Missing product or order id.",
+    "order-delete": "Shop order could not be deleted.",
+    "pending-orders-delete": "Pending shop orders could not be deleted.",
     "pickup-status": "Pickup status is not valid.",
     "pickup-update": "Pickup status could not be updated.",
     "product-create": "Product could not be created.",
@@ -196,18 +202,40 @@ function ProductFields({ product }: { product?: Product }) {
 }
 
 function OrderList({ orders }: { orders: ShopOrder[] }) {
+  const pendingOrderCount = orders.filter(
+    (order) => order.status === "pending_payment",
+  ).length;
+
   return (
     <section id="orders" className="mt-10">
-      <div>
-        <p className="text-sm font-semibold uppercase text-clay">Shop orders</p>
-        <h2 className="mt-2 text-xl font-semibold text-forest-900">
-          Pickup and payment records
-        </h2>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div>
+          <p className="text-sm font-semibold uppercase text-clay">Shop orders</p>
+          <h2 className="mt-2 text-xl font-semibold text-forest-900">
+            Paid pickup records
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-forest-900/70">
+            New shop orders are created only after Stripe confirms payment.
+            Pending records here are old abandoned checkout attempts and can be
+            removed.
+          </p>
+        </div>
+        {pendingOrderCount ? (
+          <form>
+            <ConfirmSubmitButton
+              formAction={deletePendingShopOrders}
+              message={`Delete ${pendingOrderCount} pending unpaid shop order records?`}
+              className={dangerButtonClass}
+            >
+              Delete Pending Orders
+            </ConfirmSubmitButton>
+          </form>
+        ) : null}
       </div>
       <div className="mt-4 rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
         {orders.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[76rem] text-left text-sm">
+            <table className="w-full min-w-[82rem] text-left text-sm">
               <thead className="border-b border-forest-900/10 text-forest-900/60">
                 <tr>
                   <th className="py-3 pr-4 font-semibold">Product</th>
@@ -217,6 +245,7 @@ function OrderList({ orders }: { orders: ShopOrder[] }) {
                   <th className="py-3 pr-4 font-semibold">Payment</th>
                   <th className="py-3 pr-4 font-semibold">Pickup</th>
                   <th className="py-3 pr-4 font-semibold">Created</th>
+                  <th className="py-3 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -247,7 +276,15 @@ function OrderList({ orders }: { orders: ShopOrder[] }) {
                       {moneyValue(order.amount, order.currency)}
                     </td>
                     <td className="py-4 pr-4 text-forest-900/70">
-                      {order.status}
+                      <span
+                        className={
+                          order.status === "paid"
+                            ? "font-semibold text-forest-700"
+                            : "font-semibold text-clay"
+                        }
+                      >
+                        {order.status}
+                      </span>
                     </td>
                     <td className="py-4 pr-4">
                       <form className="flex items-center gap-2">
@@ -273,6 +310,18 @@ function OrderList({ orders }: { orders: ShopOrder[] }) {
                     </td>
                     <td className="py-4 pr-4 text-forest-900/70">
                       {formatDateTime(order.created_at)}
+                    </td>
+                    <td className="py-4">
+                      <form>
+                        <input type="hidden" name="id" value={order.id} />
+                        <ConfirmSubmitButton
+                          formAction={deleteShopOrder}
+                          message="Delete this shop order record permanently?"
+                          className={dangerButtonClass}
+                        >
+                          Delete
+                        </ConfirmSubmitButton>
+                      </form>
                     </td>
                   </tr>
                 ))}
