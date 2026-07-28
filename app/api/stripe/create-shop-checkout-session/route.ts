@@ -9,14 +9,26 @@ function readFormString(formData: FormData, key: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function readQuantity(formData: FormData) {
-  const value = Number(readFormString(formData, "quantity") || "1");
+function readSelectedProductIds(formData: FormData) {
+  return Array.from(
+    new Set(
+      formData
+        .getAll("product_id")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ).slice(0, 20);
+}
+
+function readQuantity(formData: FormData, productId: string) {
+  const value = Number(readFormString(formData, `quantity_${productId}`) || "1");
 
   if (!Number.isFinite(value)) {
     return 1;
   }
 
-  return Math.min(Math.max(Math.round(value), 1), 10);
+  return Math.min(Math.max(Math.round(value), 1), 99);
 }
 
 function isValidEmail(value: string) {
@@ -87,12 +99,14 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData();
-  const productId = readFormString(formData, "productId");
-  const quantity = readQuantity(formData);
+  const productIds = readSelectedProductIds(formData);
   const checkoutDetails = requiredCheckoutDetails(formData);
 
-  if (!productId) {
-    return Response.json({ error: "Missing product." }, { status: 400 });
+  if (!productIds.length) {
+    return Response.json(
+      { error: "Select at least one product." },
+      { status: 400 },
+    );
   }
 
   if (!checkoutDetails) {
@@ -103,54 +117,68 @@ export async function POST(request: Request) {
   }
 
   const supabase = createSupabaseServiceClient();
-  const { data: product } = await supabase
+  const { data: products } = await supabase
     .from("products")
     .select("*")
-    .eq("id", productId)
-    .eq("active", true)
-    .single();
+    .in("id", productIds)
+    .eq("active", true);
+  const productsById = new Map((products ?? []).map((product) => [product.id, product]));
+  const selectedProducts = productIds.flatMap((id) => {
+    const product = productsById.get(id);
+    return product && product.price && product.price > 0 ? [product] : [];
+  });
 
-  if (!product || !product.price || product.price <= 0) {
+  if (!selectedProducts.length) {
     return Response.json(
-      { error: "Product is not available for checkout." },
+      { error: "Selected products are not available for checkout." },
       { status: 404 },
     );
   }
 
-  const pickupNote = product.pickup_note || defaultPickupNote;
   const siteUrl = getSiteUrl().replace(/\/$/, "");
   const body = new URLSearchParams({
     mode: "payment",
-    client_reference_id: product.id,
     customer_creation: "always",
     customer_email: checkoutDetails.customerEmail,
     success_url: `${siteUrl}/shop/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/shop/cancelled`,
     "phone_number_collection[enabled]": "false",
-    "line_items[0][price_data][currency]": product.currency || "aud",
-    "line_items[0][price_data][unit_amount]": String(product.price),
-    "line_items[0][price_data][product_data][name]": product.name,
-    "line_items[0][price_data][product_data][description]": stripeDescription(
-      product.description,
-      pickupNote,
-    ).slice(0, 900),
-    "line_items[0][quantity]": String(quantity),
     "custom_text[submit][message]":
       "Member-only item. Pickup at the next PROS society event only. No postal delivery.",
   });
 
+  selectedProducts.forEach((product, index) => {
+    const pickupNote = product.pickup_note || defaultPickupNote;
+    const quantity = readQuantity(formData, product.id);
+
+    body.set(
+      `line_items[${index}][price_data][currency]`,
+      product.currency || "aud",
+    );
+    body.set(`line_items[${index}][price_data][unit_amount]`, String(product.price));
+    body.set(`line_items[${index}][price_data][product_data][name]`, product.name);
+    body.set(
+      `line_items[${index}][price_data][product_data][description]`,
+      stripeDescription(product.description, pickupNote).slice(0, 900),
+    );
+    body.set(
+      `line_items[${index}][price_data][product_data][metadata][product_id]`,
+      product.id,
+    );
+    body.set(
+      `line_items[${index}][price_data][product_data][metadata][pickup_note]`,
+      pickupNote.slice(0, 500),
+    );
+    body.set(`line_items[${index}][quantity]`, String(quantity));
+  });
+
   setMetadata(body, {
-    amount: product.price * quantity,
     customer_email: checkoutDetails.customerEmail,
     customer_name: checkoutDetails.customerName,
     customer_phone: checkoutDetails.customerPhone,
     member_number: checkoutDetails.memberNumber,
     payment_type: "shop",
     pickup: "event_only",
-    pickup_note: pickupNote,
-    product_id: product.id,
-    product_name: product.name,
-    quantity,
   });
 
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {

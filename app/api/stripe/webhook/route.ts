@@ -1,5 +1,6 @@
 import { activateMembershipPayment } from "@/lib/membership/workflow";
 import { verifyStripeSignature } from "@/lib/payments/stripe";
+import { defaultPickupNote } from "@/lib/shop";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import type { createSupabaseServiceClient as createClientType } from "@/lib/supabase/server";
 import type { Database, PaymentStatus } from "@/types/database";
@@ -34,6 +35,22 @@ type StripeCheckoutSession = {
   payment_status?: string | null;
   payment_intent?: string | { id?: string } | null;
   subscription?: string | { id?: string } | null;
+};
+
+type StripeLineItem = {
+  amount_total?: number | null;
+  currency?: string | null;
+  description?: string | null;
+  price?: {
+    product?:
+      | string
+      | {
+          metadata?: StripeMetadata;
+          name?: string | null;
+        }
+      | null;
+  } | null;
+  quantity?: number | null;
 };
 
 type StripeInvoice = {
@@ -79,6 +96,45 @@ function checkoutCustomField(
 function positiveInteger(value: string | number | null | undefined) {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : null;
+}
+
+function stripeLineProduct(lineItem: StripeLineItem) {
+  const product = lineItem.price?.product;
+  return typeof product === "object" && product !== null ? product : null;
+}
+
+async function fetchShopLineItems(sessionId: string) {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+
+  if (!secretKey) {
+    return [] as StripeLineItem[];
+  }
+
+  const url = new URL(
+    `https://api.stripe.com/v1/checkout/sessions/${sessionId}/line_items`,
+  );
+  url.searchParams.set("limit", "100");
+  url.searchParams.append("expand[]", "data.price.product");
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${secretKey}`,
+    },
+  });
+
+  if (!response.ok) {
+    console.error("Stripe shop line items could not be fetched", {
+      sessionId,
+      status: response.status,
+    });
+    return [] as StripeLineItem[];
+  }
+
+  const payload = (await response.json().catch(() => null)) as
+    | { data?: StripeLineItem[] }
+    | null;
+
+  return payload?.data ?? [];
 }
 
 async function findMembershipRecords(
@@ -307,10 +363,45 @@ async function handleShopCheckoutCompleted(
   }
 
   const paidAt = new Date().toISOString();
-  const amount = session.amount_total ?? positiveInteger(metadata.amount);
-  const quantity = positiveInteger(metadata.quantity) ?? 1;
-  const currency = session.currency ?? metadata.currency ?? "aud";
-  const productName = metadata.product_name ?? "PROS shop item";
+  const lineItems = await fetchShopLineItems(session.id);
+  const parsedLineItems = lineItems.map((lineItem) => {
+    const product = stripeLineProduct(lineItem);
+    const productMetadata = product?.metadata ?? {};
+    const quantity = positiveInteger(lineItem.quantity) ?? 1;
+
+    return {
+      amount: lineItem.amount_total ?? 0,
+      currency: lineItem.currency ?? session.currency ?? "aud",
+      name: product?.name ?? lineItem.description ?? "PROS shop item",
+      pickupNote: productMetadata.pickup_note ?? null,
+      productId: productMetadata.product_id ?? null,
+      quantity,
+    };
+  });
+  const fallbackAmount = positiveInteger(metadata.amount);
+  const amount =
+    session.amount_total ??
+    (parsedLineItems.length
+      ? parsedLineItems.reduce((sum, item) => sum + item.amount, 0)
+      : fallbackAmount);
+  const quantity = parsedLineItems.length
+    ? parsedLineItems.reduce((sum, item) => sum + item.quantity, 0)
+    : (positiveInteger(metadata.quantity) ?? 1);
+  const currency =
+    session.currency ?? parsedLineItems[0]?.currency ?? metadata.currency ?? "aud";
+  const productName = parsedLineItems.length
+    ? parsedLineItems
+        .map((item) => `${item.name} x ${item.quantity}`)
+        .join("; ")
+    : (metadata.product_name ?? "PROS shop item");
+  const productId =
+    parsedLineItems.length === 1
+      ? parsedLineItems[0]?.productId
+      : (metadata.product_id ?? null);
+  const pickupNote =
+    parsedLineItems.length === 1
+      ? (parsedLineItems[0]?.pickupNote ?? defaultPickupNote)
+      : (metadata.pickup_note ?? defaultPickupNote);
   let order = null;
 
   if (metadata.order_id) {
@@ -345,9 +436,9 @@ async function handleShopCheckoutCompleted(
           customer_phone: customerPhone,
           member_number: memberNumber,
           paid_at: paidAt,
-          pickup_note: metadata.pickup_note ?? null,
+          pickup_note: pickupNote,
           pickup_status: memberNumber ? "pending_event_pickup" : "contact_required",
-          product_id: metadata.product_id ?? null,
+          product_id: productId,
           product_name: productName,
           quantity,
           status: "paid",
