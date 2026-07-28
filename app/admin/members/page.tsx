@@ -3,6 +3,7 @@ import { AdminAccessNotice } from "@/components/admin/admin-access-notice";
 import { ConfirmSubmitButton } from "@/components/admin/confirm-submit-button";
 import { StatusBadge } from "@/components/admin/status-badge";
 import {
+  deleteMember,
   markMemberActive,
   markMemberCancelled,
   markMemberExpired,
@@ -248,6 +249,23 @@ export default async function AdminMembersPage({
                             Mark Cancelled
                           </ConfirmSubmitButton>
                         </form>
+                        {member.role !== "admin" ? (
+                          <form>
+                            <input type="hidden" name="id" value={member.id} />
+                            <input
+                              type="hidden"
+                              name="returnTo"
+                              value={returnTo}
+                            />
+                            <ConfirmSubmitButton
+                              formAction={deleteMember}
+                              message="Permanently delete this member and their payment records? This cannot be undone."
+                              className="rounded-md border border-red-300 bg-red-700 px-3 py-2 font-semibold text-white hover:bg-red-800"
+                            >
+                              Delete
+                            </ConfirmSubmitButton>
+                          </form>
+                        ) : null}
                       </div>
                     </td>
                   </tr>

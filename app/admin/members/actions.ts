@@ -339,6 +339,10 @@ export async function deleteMember(formData: FormData) {
     redirect(`${returnTo}?error=member-not-found`);
   }
 
+  if (member.role === "admin") {
+    redirect(`${returnTo}?error=admin-delete-blocked`);
+  }
+
   await supabase.from("payments").delete().eq("profile_id", id);
   const { error } = await supabase.from("profiles").delete().eq("id", id);
 
