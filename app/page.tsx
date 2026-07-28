@@ -132,6 +132,53 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <section className="bg-forest-50 px-5 py-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+              <div>
+                <p className="text-sm font-semibold uppercase text-clay">
+                  PROS Member Shop
+                </p>
+                <h2 className="mt-3 max-w-3xl text-3xl font-semibold text-forest-900">
+                  Support the society through PROS member products.
+                </h2>
+                <p className="mt-5 max-w-3xl text-base leading-7 text-forest-900/72">
+                  Purchasing PROS products is a practical way to help support
+                  society activities, member equipment, outdoor education,
+                  conservation projects and future club development. Items are
+                  managed through secure checkout and collected through suitable
+                  society arrangements.
+                </p>
+              </div>
+              <div className="rounded-md border border-forest-900/10 bg-white p-6 shadow-sm">
+                <p className="text-sm font-semibold uppercase text-clay">
+                  Shop support
+                </p>
+                <ul className="mt-4 grid gap-3 text-sm leading-6 text-forest-900/72">
+                  <li className="flex gap-3">
+                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-clay" />
+                    <span>Member-focused products and society merchandise.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-clay" />
+                    <span>Purchases help fund responsible outdoor recreation.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-clay" />
+                    <span>Secure Stripe checkout with PROS order follow-up.</span>
+                  </li>
+                </ul>
+                <Link
+                  href="/shop"
+                  className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-forest-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-forest-900 sm:w-auto"
+                >
+                  Visit the Shop
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="bg-stone px-5 py-16">
           <div className="mx-auto max-w-6xl">
             <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
